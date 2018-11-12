@@ -9,22 +9,22 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class RestTemplateConfig {
+public class StockRestTemplateConfig {
 	
-	@Value("${dodoca.rest.read_timeout}")
+	@Value("${dodoca.rest.stock.read_timeout}")
 	int read_timeout;
 	
-	@Value("${dodoca.rest.connection_timeout}")
+	@Value("${dodoca.rest.stock.connection_timeout}")
 	int connection_timeout;
 	
-	@Bean(name="php_restTemplate")
-    public RestTemplate restTemplate(@Qualifier("php_httpRequestFactory")ClientHttpRequestFactory factory) {
+	@Bean(name="stock_restTemplate")
+    public RestTemplate restTemplate(@Qualifier("stock_httpRequestFactory")ClientHttpRequestFactory factory) {
 		
 		return new RestTemplate(factory);
         
     }
 
-	@Bean(name="php_httpRequestFactory")
+	@Bean(name="stock_httpRequestFactory")
     public ClientHttpRequestFactory simpleClientHttpRequestFactory() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setReadTimeout(read_timeout);
