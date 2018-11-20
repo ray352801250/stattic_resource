@@ -19,7 +19,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -272,8 +271,7 @@ public class ServiceController {
 			String domain = request.getHeader("host");
 			
 			json_log.put("nginx_request_url", request.getHeader("request_uri"));
-			Object a = request.getParameterNames();
-			
+		
 			json_log.put("nginx_request_host", domain);
 			
 			json_log.put("time_local", getESTime(new Date()));
@@ -313,11 +311,13 @@ public class ServiceController {
 			if(redisTemplate.opsForValue().get(rest_url_redis_key)==null){
 				
 				//JSONObject jsonRestReturn = restTemplate.getForEntity(rest_url_redis_key,JSONObject.class).getBody();
-				 HttpHeaders headers = new HttpHeaders();
-				 headers.add("cookie", request.getHeader("cookie"));
+				
+				HttpHeaders headers = new HttpHeaders();
+				headers.add("cookie", request.getHeader("cookie"));
+				
 				HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
 				JSONObject jsonRestReturn = restTemplate.exchange(rest_url_redis_key, HttpMethod.GET,requestEntity, JSONObject.class).getBody();
-				//JSONObject jsonRestReturn  =  JSONObject.parseObject(jsonRestReturn1);
+
 				int stock = stock_service(goods_id,json_log);
 				jsonRestReturn.put("stock", stock);
 				redisTemplate.opsForValue().set(rest_url_redis_key //key
@@ -339,36 +339,12 @@ public class ServiceController {
 
 				JSONObject jsonRedis = JSONObject.parseObject(redisTemplate.opsForValue().get(rest_url_redis_key).toString());
 				
+				//拼团V3倒计时
+				tuan_update(jsonRedis);
 				
-				if(jsonRedis.containsKey("ump") 
-						&& jsonRedis.get("ump") instanceof JSONObject 
-						&& jsonRedis.getJSONObject("ump")!=null 
-						&& jsonRedis.getJSONObject("ump").containsKey("alone")
-						&& jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
-					
-					JSONObject json_alone = jsonRedis.getJSONObject("ump").getJSONObject("alone");
-					
-					if(json_alone!=null 
-							&& json_alone.containsKey("tuan") 
-							&& json_alone.get("tuan") instanceof JSONObject){
-						
-						JSONObject json_tuan = json_alone.getJSONObject("tuan");
-						
-						if(json_tuan.containsKey("finished_at") 
-								&& json_tuan.containsKey("end_time")){
-							
-							long f_time = json_tuan.getLongValue("finished_at");
-							
-							long now_unix_time = new Date().getTime()/1000;
-							
-							long new_endtime = f_time-now_unix_time;
-
-							//活动未开始
-							if(new_endtime>0)
-								json_tuan.put("end_time", new_endtime);
-						}
-					}
-				}
+				//拍卖倒计时
+				auction_update(jsonRedis);
+				
 				
 				int stock = stock_service(goods_id,json_log);
 				jsonRedis.put("stock", stock);
@@ -397,6 +373,81 @@ public class ServiceController {
 			logger.info(json_log.toJSONString());	
 		}
 	
+	}
+	
+	/**
+	 * 拍卖倒计时
+	 * @param jsonRedis
+	 * @throws ParseException 
+	 */
+	public void auction_update(JSONObject jsonRedis) throws ParseException{
+		
+		if(jsonRedis.containsKey("ump") 
+				&& jsonRedis.get("ump") instanceof JSONObject 
+				&& jsonRedis.getJSONObject("ump").containsKey("alone")
+				&& jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
+			
+			JSONObject json_alone = jsonRedis.getJSONObject("ump").getJSONObject("alone");
+			
+			if(json_alone.containsKey("type") 
+					&& json_alone.getString("type").equals("auction")
+					&& json_alone.containsKey("data")
+					&& json_alone.get("data") instanceof JSONObject){
+				
+				JSONObject json_auction = json_alone.getJSONObject("data");
+				
+				if(json_auction.containsKey("start_at") && json_auction.containsKey("count_down")){
+
+					long s_time = sdf.parse(json_auction.getString("start_at")).getTime()/1000;
+					
+					long now_unix_time = new Date().getTime()/1000;
+					
+					long new_endtime = s_time-now_unix_time;
+					
+					//活动未开始
+					if(new_endtime>0)
+						json_auction.put("count_down", new_endtime);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 拼团商品详情页倒计时
+	 * @param jsonRedis
+	 */
+	public void tuan_update(JSONObject jsonRedis){
+		
+		if(jsonRedis.containsKey("ump") 
+				&& jsonRedis.get("ump") instanceof JSONObject 
+				&& jsonRedis.getJSONObject("ump")!=null 
+				&& jsonRedis.getJSONObject("ump").containsKey("alone")
+				&& jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
+			
+			JSONObject json_alone = jsonRedis.getJSONObject("ump").getJSONObject("alone");
+			
+			if(json_alone!=null 
+					&& json_alone.containsKey("tuan") 
+					&& json_alone.get("tuan") instanceof JSONObject){
+				
+				JSONObject json_tuan = json_alone.getJSONObject("tuan");
+				
+				if(json_tuan.containsKey("finished_at") 
+						&& json_tuan.containsKey("end_time")){
+					
+					long f_time = json_tuan.getLongValue("finished_at");
+					
+					long now_unix_time = new Date().getTime()/1000;
+					
+					long new_endtime = f_time-now_unix_time;
+
+					//活动未开始
+					if(new_endtime>0)
+						json_tuan.put("end_time", new_endtime);
+				}
+			}
+		}
+		
 	}
 	
 	/**
