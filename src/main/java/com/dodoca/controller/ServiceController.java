@@ -128,8 +128,13 @@ public class ServiceController {
 			}
 			
 			if(!redisTemplate.opsForHash().hasKey(domain,rest_url_redis_key)){
+				HttpHeaders headers = new HttpHeaders();
+				headers.add("cookie", request.getHeader("cookie"));
+
+				HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
+				JSONObject jsonRestReturn = restTemplate.exchange(rest_url_redis_key, HttpMethod.GET,requestEntity, JSONObject.class).getBody();
 				
-				JSONObject jsonRestReturn = restTemplate.getForEntity(rest_url_redis_key,JSONObject.class).getBody();
+//				JSONObject jsonRestReturn = restTemplate.getForEntity(rest_url_redis_key,JSONObject.class).getBody();
 				
 				if(compute_json(jsonRestReturn)){
 					
@@ -544,7 +549,8 @@ public class ServiceController {
 		 for (int i = 0; i < param_arrs.length; i++) {
 			 if(param_arrs[i].indexOf("t=")==0 
 					 || param_arrs[i].indexOf("static_resources_1532507670=")==0 
-					 || param_arrs[i].indexOf("static_goods_detail=bigdata")==0)
+					 || param_arrs[i].indexOf("static_goods_detail=bigdata")==0
+					 || param_arrs[i].indexOf("uuid=")==0)
 				 continue;
 			
 			 sbUrl.append(param_arrs[i]);
