@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,7 @@ import com.alibaba.fastjson.JSONObject;
 @Controller
 @RequestMapping("/static/")
 public class ServiceController {
-	private static Logger logger = Logger.getLogger(ServiceController.class);
+	private static Logger logger = LoggerFactory.getLogger(ServiceController.class);
 	
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
@@ -405,7 +406,7 @@ public class ServiceController {
 
 					long s_time = sdf.parse(json_auction.getString("start_at")).getTime()/1000;
 					
-					long now_unix_time = new Date().getTime()/1000;
+					long now_unix_time = System.currentTimeMillis()/1000;
 					
 					long new_endtime = s_time-now_unix_time;
 					
@@ -442,7 +443,7 @@ public class ServiceController {
 					
 					long f_time = json_tuan.getLongValue("finished_at");
 					
-					long now_unix_time = new Date().getTime()/1000;
+					long now_unix_time = System.currentTimeMillis()/1000;
 					
 					long new_endtime = f_time-now_unix_time;
 
