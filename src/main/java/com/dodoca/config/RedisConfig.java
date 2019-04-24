@@ -1,10 +1,12 @@
 package com.dodoca.config;
 
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,67 +26,20 @@ import redis.clients.jedis.JedisPoolConfig;
  * @Description:
  */
 @Configuration
-@EnableAutoConfiguration
 public class RedisConfig {
-    private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
-
-    @Value("${spring.redis.database}")
-    private  int database;
-
-    @Value("${spring.redis.host}")
-    private String host;
-
-    @Value("${spring.redis.password}")
-    private String password;
-
-    @Value("${spring.redis.port}")
-    private  int port;
+    @Autowired
+    RedisProperties redisProperties;
 
     @Value("${spring.redis.timeout}")
-    private  int timeout;
+    private int timeout;
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.redis.jedis.pool")
-    public JedisPoolConfig jedisPoolConfig(){
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        return jedisPoolConfig;
+    public JedisPool jedisPool(){
+        JedisPoolConfig config = new JedisPoolConfig();
+        config.setMaxIdle(redisProperties.getJedis().getPool().getMaxIdle());
+        config.setMaxTotal(redisProperties.getJedis().getPool().getMaxActive());
+        config.setMaxWaitMillis(redisProperties.getJedis().getPool().getMaxWait().toMillis());
+        return new JedisPool(config, redisProperties.getHost(), redisProperties.getPort(), timeout, redisProperties.getPassword());
     }
-
-    @Bean
-    public JedisConnectionFactory jedisConnectionFactory() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration =
-                new RedisStandaloneConfiguration();
-        redisStandaloneConfiguration.setHostName(host);
-        redisStandaloneConfiguration.setDatabase(database);
-        redisStandaloneConfiguration.setPassword(RedisPassword.of(password));
-        redisStandaloneConfiguration.setPort(port);
-        //开启连接池
-        JedisClientConfiguration.JedisPoolingClientConfigurationBuilder jedisPoolingClientConfigurationBuilder =
-                (JedisClientConfiguration.JedisPoolingClientConfigurationBuilder) JedisClientConfiguration.builder();
-        jedisPoolingClientConfigurationBuilder.poolConfig(jedisPoolConfig());
-        JedisClientConfiguration jedisClientConfiguration = jedisPoolingClientConfigurationBuilder.build();
-        JedisConnectionFactory factory = new JedisConnectionFactory(redisStandaloneConfiguration,
-                jedisClientConfiguration);
-        logger.info("JedisConnectionFactory bean init success.");
-        return factory;
-    }
-
-    @Bean
-    public StringRedisTemplate redisTemplate() {
-        return new StringRedisTemplate(jedisConnectionFactory());
-    }
-
-    @Bean
-    public JedisPool redisPoolFactory() {
-        logger.info("JedisPool init successful，host -> [{}]；port -> [{}]", host, port);
-        return new JedisPool(jedisPoolConfig(), host, port, timeout, password);
-    }
-
-    @Bean
-    public Jedis jedis() {
-        return redisPoolFactory().getResource();
-    }
-
-
 
 }

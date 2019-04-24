@@ -1,10 +1,6 @@
 package com.dodoca.utils;
 
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.springframework.beans.factory.annotation.Autowired;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisShardInfo;
-
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -14,12 +10,11 @@ import java.util.concurrent.CountDownLatch;
  * @Date: 2019/4/23 17:05
  * @Description:
  */
-public class RedisTool {
+public class RedisLock {
     private static final String LOCK_SUCCESS = "OK";
     private static final String SET_IF_NOT_EXIST = "NX";
     private static final String SET_WITH_EXPIRE_TIME = "PX";
     private static final Long RELEASE_SUCCESS = 1L;
-
 
     /**
      * 尝试获取分布式锁
