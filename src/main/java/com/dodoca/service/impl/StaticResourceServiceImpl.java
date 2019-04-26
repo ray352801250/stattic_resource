@@ -1,9 +1,8 @@
 package com.dodoca.service.impl;
 
-import com.alibaba.fastjson.JSONArray;
+
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
-import com.dodoca.controller.StaticResourceController;
 import com.dodoca.service.StaticResourceService;
 import com.dodoca.service.StaticResourceVersionOneService;
 import com.dodoca.utils.HandleRequestUtil;
@@ -12,13 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.UUID;
 
