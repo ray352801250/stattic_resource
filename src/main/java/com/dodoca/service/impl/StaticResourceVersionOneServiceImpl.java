@@ -3,6 +3,7 @@ package com.dodoca.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
 import com.dodoca.service.StaticResourceVersionOneService;
+import com.dodoca.utils.DateUtils_java8;
 import com.dodoca.utils.HandleRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -289,30 +291,19 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
     }
 
 
-
-
-
-//    public static Date expire_time(int num) throws ParseException{
-//
-//        Calendar ca = Calendar.getInstance();
-//
-//        ca.add(Calendar.DATE, 1);
-//
-//        Date date  = ca.getTime();
-//
-//        String date_str = format.format(date);
-//
-//        String new_date = date_str + " 02:00:00";
-//
-//
-//        return sdf_format.parse(new_date);
-//
-//    }
-
-
     public static String getESTime(Date date){
         df.setTimeZone(tz);
         return df.format(date);
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime now = LocalDateTime.now();
+        String s = DateUtils_java8.formatLoalDateTime(now);
+        System.out.println("s: " + s);
+        LocalDateTime localDateTime = now.plusDays(2);
+        System.out.println("localDateTime: " + DateUtils_java8.formatLoalDateTime(localDateTime));
+        LocalDateTime localDateTime2 = now.minusDays(2);
+        System.out.println("localDateTime2: " + DateUtils_java8.formatLoalDateTime(localDateTime2));
     }
 
 
