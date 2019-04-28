@@ -132,7 +132,6 @@ public class HandleRequestUtil {
      * @throws ParseException
      */
     public static void auctionUpdate(JSONObject jsonRedis) throws ParseException{
-
         if(jsonRedis.containsKey("ump")  && jsonRedis.get("ump") instanceof JSONObject
                 && jsonRedis.getJSONObject("ump").containsKey("alone")
                 && jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
@@ -158,6 +157,7 @@ public class HandleRequestUtil {
             }
         }
     }
+
 
 
 }

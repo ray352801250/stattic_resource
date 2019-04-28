@@ -1,5 +1,6 @@
-package com.dodoca.consumer;
+package com.dodoca.common;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
 import com.dodoca.service.impl.RequestPhpService;
@@ -41,21 +42,25 @@ public class RequestConsumer {
         if (kafkaMessage.isPresent()) {
             //获取消息
             String message = kafkaMessage.get().toString();
-            JSONObject json = JSONObject.parseObject(message);
+            logger.info("message: " + message);
+            JSONObject jsonMessage = JSON.parseObject(message);
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
             String staticResourceLockExpireTime = redisClient.get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
                 staticResourceLockExpireTime = "180000";
             }
-            boolean getLock = redisClient.tryGetDistributedLock(message + "_distributed_lock", uuid,  new Integer(staticResourceLockExpireTime));
+            String restUrlRedisKey = jsonMessage.get("restUrlRedisKey").toString();
+            String lockKey = restUrlRedisKey + "_distributed_lock";
+            logger.info("lockKey: " + lockKey);
+            boolean getLock = redisClient.tryGetDistributedLock(lockKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回
             if (!getLock) {
                 return;
             }
-            JSONObject jsonObject = requestPhpService.requestPhpServer("", message);
+            JSONObject jsonObject = requestPhpService.requestPhpServer(jsonMessage.get("cookie").toString(), restUrlRedisKey);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.set(message, jsonObject.toJSONString());
+                redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
                 logger.info(message + " 缓存更新完毕");
             }
         }

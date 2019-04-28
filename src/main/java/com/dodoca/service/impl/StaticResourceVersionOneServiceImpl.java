@@ -296,15 +296,6 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
         return df.format(date);
     }
 
-    public static void main(String[] args) {
-        LocalDateTime now = LocalDateTime.now();
-        String s = DateUtils_java8.formatLoalDateTime(now);
-        System.out.println("s: " + s);
-        LocalDateTime localDateTime = now.plusDays(2);
-        System.out.println("localDateTime: " + DateUtils_java8.formatLoalDateTime(localDateTime));
-        LocalDateTime localDateTime2 = now.minusDays(2);
-        System.out.println("localDateTime2: " + DateUtils_java8.formatLoalDateTime(localDateTime2));
-    }
 
 
 }

@@ -8,6 +8,7 @@ import com.dodoca.dao.ShopMapper;
 import com.dodoca.service.StaticResourceService;
 import com.dodoca.service.StaticResourceVersionOneService;
 import com.dodoca.utils.HandleRequestUtil;
+import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletRequest;
-import javax.sql.DataSource;
-import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.UUID;
 
 /**
@@ -63,9 +63,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     ShopMapper shopMapper;
 
     @Autowired
-    KafkaSender<String> kafkaSender;
-
-
+    KafkaSender<JSONObject> kafkaSender;
 
 
     @Override
@@ -78,58 +76,29 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             String cookie = request.getHeader("cookie");
             jsonLog.put("nginx_request_host", domain);
             jsonLog.put("nginx_request_url", requestUri);
-            String oldRequestUri = requestHttpType + "://" + domain + requestUri;
+            String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
             String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
-            String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
-            if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
-                String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
-                for (String host : versionOneHosts) {
-                    if (domain.equals(host)) {
-                        JSONObject resource = staticResourceVersionOneServiceImpl.resource(request);
-                        long endTime = System.currentTimeMillis();
-                        jsonLog.put("type", "version-1.0");
-                        jsonLog.put("interface_time", (endTime - startTime));
-                        return resource;
-                    }
-                }
+            if (isVersionOneHost(domain)) {
+                return getResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
-            if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
-                String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
-                for (String host : notCacheHosts) {
-                    if (domain.equals(host)) {
-                        JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUri);
-                        long endTime = System.currentTimeMillis();
-                        jsonLog.put("type", "php");
-                        jsonLog.put("interface_time", (endTime - startTime));
-                        return jsonObject;
-                    }
-                }
+            if (isNotThroughRedis(domain)) {
+                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
             if (domain != null && domain.startsWith("shop")) {
-                String substring = domain.substring(0, domain.indexOf("."));
-                Integer shopId = new Integer(substring.substring(4));
-                Integer platformType = shopMapper.getPlatformTypeById(shopId);
-                if (platformType == null || platformType != 10) {
-                    JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUri);
-                    long endTime = System.currentTimeMillis();
-                    jsonLog.put("type", "php");
-                    jsonLog.put("interface_time", (endTime - startTime));
-                    return jsonObject;
+                if (!isCacheType(domain)) {
+                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
             }
-            kafkaSender.send(trueRequestUri);
-            if (redisClient.exists(trueRequestUri)) {
-                JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
-                //更新秒杀倒计时 时间
-                HandleRequestUtil.updateNowDate(jsonRedis);
-                long endTime = System.currentTimeMillis();
-                jsonLog.put("type", "redis");
-                jsonLog.put("interface_time", (endTime - startTime));
-                return jsonRedis;
+            JSONObject jsonMessage = new JSONObject();
+            jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
+            jsonMessage.put("cookie", cookie);
+            kafkaSender.send(jsonMessage);
+            if (redisClient.exists(restUrlRedisKey)) {
+                return getHomePageFromRedis(restUrlRedisKey, jsonLog, startTime);
             }
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
@@ -143,18 +112,12 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             if (!getLock) {
                 Thread.sleep(2000);
                 if (redisClient.exists(trueRequestUri)) {
-                    JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
-                    //更新秒杀倒计时 时间
-                    HandleRequestUtil.updateNowDate(jsonRedis);
-                    long endTime = System.currentTimeMillis();
-                    jsonLog.put("type", "redis");
-                    jsonLog.put("interface_time", (endTime - startTime));
-                    return jsonRedis;
+                    return getHomePageFromRedis(restUrlRedisKey, jsonLog, startTime);
                 }
             }
-            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUri);
+            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.set(trueRequestUri, jsonObject.toJSONString());
+                redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             }
             return jsonObject;
         }catch (Exception e) {
@@ -183,45 +146,25 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
-            String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
-            if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
-                String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
-                for (String host : versionOneHosts) {
-                    if (domain.equals(host)) {
-                        JSONObject resource = staticResourceVersionOneServiceImpl.resourceGoods(request);
-                        long endTime = System.currentTimeMillis();
-                        jsonLog.put("type", "version-1.0");
-                        jsonLog.put("interface_time", (endTime - startTime));
-                        return resource;
-                    }
-                }
+            if (isVersionOneHost(domain)) {
+                return getResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
-            if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
-                String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
-                for (String host : notCacheHosts) {
-                    if (domain.equals(host)) {
-                        JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
-                        long endTime = System.currentTimeMillis();
-                        jsonLog.put("type", "php");
-                        jsonLog.put("interface_time", (endTime - startTime));
-                        return jsonObject;
-                    }
-                }
+            if (isNotThroughRedis(domain)) {
+                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
             if (domain != null && domain.startsWith("shop")) {
-                String substring = domain.substring(0, domain.indexOf("."));
-                Integer shopId = new Integer(substring.substring(4));
-                logger.info("shopId: " + shopId);
-                Integer platformType = shopMapper.getPlatformTypeById(shopId);
-                if (platformType == null || platformType != 10) {
-                    JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
-                    long endTime = System.currentTimeMillis();
-                    jsonLog.put("type", "php");
-                    jsonLog.put("interface_time", (endTime - startTime));
-                    return jsonObject;
+                if (!isCacheType(domain)) {
+                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
+            }
+            JSONObject jsonMessage = new JSONObject();
+            jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
+            jsonMessage.put("cookie", cookie);
+            kafkaSender.send(jsonMessage);
+            if (redisClient.exists(restUrlRedisKey)) {
+                return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
             }
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
@@ -233,21 +176,14 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             boolean getLock = redisClient.tryGetDistributedLock(restUrlRedisKey + "_distributed_lock", uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回缓存结果
             if (!getLock) {
-                JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
-                //拼团V3倒计时
-                HandleRequestUtil.tuanUpdate(jsonRedis);
-                //拍卖倒计时
-                HandleRequestUtil.auctionUpdate(jsonRedis);
-                int stock = requestPhpService.stock_service(goodsId,jsonLog);
-                jsonRedis.put("stock", stock);
-                long endTime = System.currentTimeMillis();
-                jsonLog.put("type", "redis");
-                jsonLog.put("interface_time", (endTime - startTime));
-                return jsonRedis;
+                Thread.sleep(2000);
+                if (redisClient.exists(restUrlRedisKey)) {
+                    return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
+                }
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.set(trueRequestUri, jsonObject.toJSONString());
+                redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             }
             return jsonObject;
         }catch (Exception e) {
@@ -279,6 +215,129 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         return jsonStock;
     }
 
+
+    /**
+     * 更新商品详情页中的活动倒计时时间
+     * @param restUrlRedisKey
+     * @param goodsId
+     * @param jsonLog
+     * @throws ParseException
+     */
+    private JSONObject getGoodsDetailFromRedis(String restUrlRedisKey, String goodsId, JSONObject jsonLog, Long startTime) throws ParseException {
+        JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
+        //拼团V3倒计时
+        HandleRequestUtil.tuanUpdate(jsonRedis);
+        //拍卖倒计时
+        HandleRequestUtil.auctionUpdate(jsonRedis);
+        int stock = requestPhpService.stock_service(goodsId,jsonLog);
+        jsonRedis.put("stock", stock);
+        jsonLog.put("type", "redis");
+        long endTime = System.currentTimeMillis();
+        jsonLog.put("interface_time", (endTime - startTime));
+        return jsonRedis;
+    }
+
+    /**
+     *更新首页中的秒杀活动倒计时时间
+     * @param restUrlRedisKey
+     * @param jsonLog
+     * @param startTime
+     * @return
+     */
+    private JSONObject getHomePageFromRedis(String restUrlRedisKey, JSONObject jsonLog, Long startTime) {
+        JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
+        //更新秒杀倒计时 时间
+        HandleRequestUtil.updateNowDate(jsonRedis);
+        long endTime = System.currentTimeMillis();
+        jsonLog.put("type", "redis");
+        jsonLog.put("interface_time", (endTime - startTime));
+        return jsonRedis;
+    }
+
+    /**
+     * 判断是否是要走一期的域名
+     * @param domain
+     * @return
+     */
+    private Boolean isVersionOneHost(String domain) {
+        String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
+        if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
+            String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
+            for (String host : versionOneHosts) {
+                if (host.equals(domain)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断是否走缓存
+     * @param domain
+     * @return
+     */
+    private Boolean isNotThroughRedis(String domain) {
+        if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
+            String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
+            for (String host : notCacheHosts) {
+                if (host.equals(domain)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断商铺类型是否走缓存
+     * @param domain
+     * @return
+     */
+    private Boolean isCacheType(String domain) {
+        String substring = domain.substring(0, domain.indexOf("."));
+        Integer shopId = new Integer(substring.substring(4));
+        Integer platformType = shopMapper.getPlatformTypeById(shopId);
+        if (platformType == null || platformType != 10) {
+            return false;
+        }
+        return true;
+    }
+
+
+
+
+
+    /**
+     * 获取结果从一期逻辑
+     * @param request
+     * @param jsonLog
+     * @param startTime
+     * @return
+     */
+    private JSONObject getResultFromVersionOne(HttpServletRequest request, JSONObject jsonLog, Long startTime) {
+        JSONObject resource = staticResourceVersionOneServiceImpl.resource(request);
+        long endTime = System.currentTimeMillis();
+        jsonLog.put("type", "version-1.0");
+        jsonLog.put("interface_time", (endTime - startTime));
+        return resource;
+    }
+
+    /**
+     * 从php获取结果
+     * @param oldRequestUrl
+     * @param cookie
+     * @param jsonLog
+     * @param startTime
+     * @return
+     */
+    private JSONObject getResultFromPhp(String oldRequestUrl, String cookie, JSONObject jsonLog, Long startTime) {
+        JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
+        long endTime = System.currentTimeMillis();
+        jsonLog.put("type", "php");
+        jsonLog.put("interface_time", (endTime - startTime));
+        return jsonObject;
+    }
 
 
 

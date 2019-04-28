@@ -48,7 +48,7 @@ public class RequestPhpService {
             HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
             result = restTemplate.exchange(url, HttpMethod.GET, requestEntity, JSONObject.class).getBody();
         }catch (Exception e) {
-            logger.info("请求php服务异常!!!!!!!!!!");
+            logger.info("请求php服务异常!!!!!!!!!! url: " + url);
             logger.error(e.getMessage(), e);
             return result;
         }

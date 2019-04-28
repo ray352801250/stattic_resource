@@ -18,8 +18,6 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Component
 public class KafkaSender<T> {
 
-    private Logger logger = LoggerFactory.getLogger(KafkaSender.class);
-
     @Value("${spring.kafka.template.default-topic}")
     private String topic;
 
@@ -33,7 +31,6 @@ public class KafkaSender<T> {
      */
     public void send(T obj) {
         String jsonObj = JSON.toJSONString(obj);
-        logger.info("------------ message = {}", jsonObj);
         //发送消息
         ListenableFuture<SendResult<String, Object>> future = kafkaTemplate.send(topic, jsonObj);
 //        future.addCallback(new ListenableFutureCallback<SendResult<String, Object>>() {
