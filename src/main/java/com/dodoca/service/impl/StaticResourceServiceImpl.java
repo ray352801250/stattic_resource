@@ -81,7 +81,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (isVersionOneHost(domain)) {
-                return getResultFromVersionOne(request, jsonLog, startTime);
+                return getHomePageResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
             if (isNotThroughRedis(domain)) {
@@ -93,11 +93,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                     return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
             }
-            JSONObject jsonMessage = new JSONObject();
-            jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-            jsonMessage.put("cookie", cookie);
-            kafkaSender.send(jsonMessage);
             if (redisClient.exists(restUrlRedisKey)) {
+                JSONObject jsonMessage = new JSONObject();
+                jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
+                jsonMessage.put("cookie", cookie);
+                kafkaSender.send(jsonMessage);
                 return getHomePageFromRedis(restUrlRedisKey, jsonLog, startTime);
             }
             String uuid = UUID.randomUUID().toString();
@@ -111,7 +111,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //没有获取锁就直接返回缓存结果
             if (!getLock) {
                 Thread.sleep(2000);
-                if (redisClient.exists(trueRequestUri)) {
+                if (redisClient.exists(restUrlRedisKey)) {
+                    return getHomePageFromRedis(restUrlRedisKey, jsonLog, startTime);
+                }
+                Thread.sleep(3000);
+                if (redisClient.exists(restUrlRedisKey)) {
                     return getHomePageFromRedis(restUrlRedisKey, jsonLog, startTime);
                 }
             }
@@ -147,7 +151,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (isVersionOneHost(domain)) {
-                return getResultFromVersionOne(request, jsonLog, startTime);
+                return getGoodsDetailResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
             if (isNotThroughRedis(domain)) {
@@ -159,11 +163,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                     return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
             }
-            JSONObject jsonMessage = new JSONObject();
-            jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-            jsonMessage.put("cookie", cookie);
-            kafkaSender.send(jsonMessage);
             if (redisClient.exists(restUrlRedisKey)) {
+                JSONObject jsonMessage = new JSONObject();
+                jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
+                jsonMessage.put("cookie", cookie);
+                kafkaSender.send(jsonMessage);
                 return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
             }
             String uuid = UUID.randomUUID().toString();
@@ -182,9 +186,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 }
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
-            if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
-            }
+            redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -260,14 +262,20 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private Boolean isVersionOneHost(String domain) {
-        String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
-        if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
-            String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
-            for (String host : versionOneHosts) {
-                if (host.equals(domain)) {
-                    return true;
+        try {
+            String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
+            if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
+                String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
+                for (String host : versionOneHosts) {
+                    if (host.equals(domain)) {
+                        return true;
+                    }
                 }
             }
+        }catch (Exception e) {
+            logger.error("redis异常 , 告警 -----------------");
+            logger.error(e.getMessage(),e);
+            return true;
         }
         return false;
     }
@@ -315,8 +323,16 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @param startTime
      * @return
      */
-    private JSONObject getResultFromVersionOne(HttpServletRequest request, JSONObject jsonLog, Long startTime) {
+    private JSONObject getHomePageResultFromVersionOne(HttpServletRequest request, JSONObject jsonLog, Long startTime) {
         JSONObject resource = staticResourceVersionOneServiceImpl.resource(request);
+        long endTime = System.currentTimeMillis();
+        jsonLog.put("type", "version-1.0");
+        jsonLog.put("interface_time", (endTime - startTime));
+        return resource;
+    }
+
+    private JSONObject getGoodsDetailResultFromVersionOne(HttpServletRequest request, JSONObject jsonLog, Long startTime) {
+        JSONObject resource = staticResourceVersionOneServiceImpl.resourceGoods(request);
         long endTime = System.currentTimeMillis();
         jsonLog.put("type", "version-1.0");
         jsonLog.put("interface_time", (endTime - startTime));
