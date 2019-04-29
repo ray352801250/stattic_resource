@@ -184,6 +184,10 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 if (redisClient.exists(restUrlRedisKey)) {
                     return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
                 }
+                Thread.sleep(3000);
+                if (redisClient.exists(restUrlRedisKey)) {
+                    return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
+                }
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
