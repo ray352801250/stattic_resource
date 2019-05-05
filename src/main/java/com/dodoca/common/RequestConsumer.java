@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -28,14 +29,13 @@ import java.util.UUID;
 public class RequestConsumer {
     private static final Logger logger = LoggerFactory.getLogger(RequestConsumer.class);
 
-
     @Autowired
     private RedisClient redisClient;
 
     @Autowired
     RequestPhpService requestPhpService;
 
-    @KafkaListener(topics = "wxrrd_static_resource_server_request")
+    @KafkaListener(topics = {"${spring.kafka.template.default-topic}"})
     public void listen(ConsumerRecord<?, ?> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         //判断是否NULL
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());

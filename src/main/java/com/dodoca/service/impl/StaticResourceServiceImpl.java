@@ -8,7 +8,6 @@ import com.dodoca.dao.ShopMapper;
 import com.dodoca.service.StaticResourceService;
 import com.dodoca.service.StaticResourceVersionOneService;
 import com.dodoca.utils.HandleRequestUtil;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,13 +69,16 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     public JSONObject homePageResource(HttpServletRequest request) {
         long startTime = System.currentTimeMillis();
         JSONObject jsonLog = new JSONObject();
+        String domain = request.getHeader("host");
+        String requestUri = request.getHeader("request_uri");
+        String cookie = request.getHeader("cookie");
+        jsonLog.put("nginx_request_host", domain);
+        jsonLog.put("nginx_request_url", requestUri);
+        if (domain == null || requestUri == null) {
+            return new JSONObject();
+        }
+        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
         try {
-            String domain = request.getHeader("host");
-            String requestUri = request.getHeader("request_uri");
-            String cookie = request.getHeader("cookie");
-            jsonLog.put("nginx_request_host", domain);
-            jsonLog.put("nginx_request_url", requestUri);
-            String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
             String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
@@ -88,7 +90,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-            if (domain != null && domain.startsWith("shop")) {
+            if (domain.startsWith("shop")) {
                 if (!isCacheType(domain)) {
                     return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
@@ -126,9 +128,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
-            jsonLog.put("error_type", "other");
             jsonLog.put("error_message", e.getMessage());
-            return new JSONObject();
+            return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
         }finally {
             logger.info(jsonLog.toJSONString());
         }
@@ -138,15 +139,18 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     public JSONObject goodsDetailResource(HttpServletRequest request) {
         long startTime = System.currentTimeMillis();
         JSONObject jsonLog = new JSONObject();
+        String domain = request.getHeader("host");
+        String requestUri = request.getHeader("request_uri");
+        jsonLog.put("nginx_request_host", domain);
+        jsonLog.put("nginx_request_url", requestUri);
+        if (domain == null || requestUri == null) {
+            return new JSONObject();
+        }
+        String cookie = request.getHeader("cookie");
+        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
         try {
-            String domain = request.getHeader("host");
-            String requestUri = request.getHeader("request_uri");
-            String cookie = request.getHeader("cookie");
             String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
-            String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/")+1, goodsIdUrl.indexOf(".json"));
-            jsonLog.put("nginx_request_host", domain);
-            jsonLog.put("nginx_request_url", requestUri);
-            String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
+            String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
             String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
             String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
@@ -158,7 +162,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-            if (domain != null && domain.startsWith("shop")) {
+            if (domain.startsWith("shop")) {
                 if (!isCacheType(domain)) {
                     return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
                 }
@@ -194,9 +198,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
-            jsonLog.put("error_type", "other");
             jsonLog.put("error_message", e.getMessage());
-            return new JSONObject();
+            return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
         }finally {
             logger.info(jsonLog.toJSONString());
         }
@@ -208,12 +211,12 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String phpStockInterface = null;
         try {
             String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
-            String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/")+1,goodsIdUrl.indexOf(".json"));
+            String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
             long startTime = System.currentTimeMillis();
             phpStockInterface = String.format(format_php_stock_interface,UUID.randomUUID().toString(),goodsId);
             jsonStock = restTemplate_stock.getForEntity(phpStockInterface,JSONObject.class).getBody();
             long endTime = System.currentTimeMillis();
-            logger.info("stock_interface_time: "+(endTime - startTime));
+            logger.info("stock_interface_time: "+ (endTime - startTime));
             return jsonStock;
         } catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -266,20 +269,14 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private Boolean isVersionOneHost(String domain) {
-        try {
-            String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
-            if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
-                String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
-                for (String host : versionOneHosts) {
-                    if (host.equals(domain)) {
-                        return true;
-                    }
+        String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
+        if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
+            String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
+            for (String host : versionOneHosts) {
+                if (host.equals(domain)) {
+                    return true;
                 }
             }
-        }catch (Exception e) {
-            logger.error("redis异常 , 告警 -----------------");
-            logger.error(e.getMessage(),e);
-            return true;
         }
         return false;
     }
@@ -290,6 +287,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private Boolean isNotThroughRedis(String domain) {
+        String staticResourceNotCacheHosts = redisClient.get("static_resource_not_cache_hosts");
         if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
             String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
             for (String host : notCacheHosts) {

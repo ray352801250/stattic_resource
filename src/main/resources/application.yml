@@ -11,14 +11,14 @@ logging:
 request_http_type: https
 #配置不走缓存的host
 static_resource_not_cache_hosts:
-#库存服务地址
-dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 #key过期时间 s
 dodoca_redis_key_expire_time: 300
+#日志级别
 dodoca_log_level: 0
+#php服务rest请求超时时间
 dodoca_rest_read_timeout: 60000
 dodoca_rest_connection_timeout: 60000
-
+#库存服务rest请求超时时间
 dodoca_rest_stock_read_timeout: 20000
 dodoca_rest_stock_connection_timeout: 20000
 
@@ -101,6 +101,8 @@ spring:
       auto-offset-reset: latest
     template:
       default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 
 
 
@@ -184,6 +186,8 @@ spring:
       auto-offset-reset: latest
     template:
       default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.16.255.26:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 
 ---
 spring:
@@ -263,3 +267,6 @@ spring:
       auto-offset-reset: latest
     template:
       default-topic: wxrrd_static_resource_server_request
+
+#库存服务地址
+dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
