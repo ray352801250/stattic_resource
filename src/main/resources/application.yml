@@ -191,8 +191,8 @@ spring:
     #  # 连接池中的最小空闲连接
       min-idle: 0
   kafka:
-  ##  -------------kafka----------------online
-    bootstrap-servers: 127.0.0.1:9092
+  ##  -------------kafka----------------
+    bootstrap-servers: 172.17.235.115:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -200,7 +200,7 @@ spring:
       batch-size: 16384
       buffer-memory: 33554432
     consumer:
-      group-id: static_resource_server_1
+      group-id: static_resource_server_01
       enable-auto-commit: true
       auto-commit-interval: 6000
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -287,8 +287,8 @@ spring:
     #  # 连接池中的最小空闲连接
       min-idle: 0
   kafka:
-  ##  -------------kafka----------------online
-    bootstrap-servers: 127.0.0.1:9092
+  ##  -------------kafka----------------
+    bootstrap-servers: 172.17.0.143:9092,172.17.0.144:9092,172.17.0.49:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -296,7 +296,7 @@ spring:
       batch-size: 16384
       buffer-memory: 33554432
     consumer:
-      group-id: static_resource_server_1
+      group-id: static_resource_server_01
       enable-auto-commit: true
       auto-commit-interval: 6000
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
