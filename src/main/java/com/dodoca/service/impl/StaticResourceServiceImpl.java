@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -32,17 +33,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Autowired
     private RedisClient redisClient;
 
-    /**
-     * 配置不走缓存的host
-     */
-    @Value("${static_resource_not_cache_hosts}")
-    String staticResourceNotCacheHosts;
-
     @Value("${request_http_type}")
     String requestHttpType;
 
     @Value("${dodoca_php_stock_interface}")
-    String format_php_stock_interface;
+    String formatPhpStockInterface;
 
     @Autowired
     @Qualifier("php_restTemplate" )
@@ -50,7 +45,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
 
     @Autowired
     @Qualifier("stock_restTemplate" )
-    RestTemplate restTemplate_stock;
+    RestTemplate restTemplateStock;
 
     @Autowired
     RequestPhpService requestPhpService;
@@ -63,6 +58,10 @@ public class StaticResourceServiceImpl implements StaticResourceService {
 
     @Autowired
     KafkaSender<JSONObject> kafkaSender;
+
+    @Autowired
+    @Qualifier("redisConfigTemplate")
+    StringRedisTemplate stringRedisTemplate;
 
 
     @Override
@@ -86,15 +85,18 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getHomePageResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
-            if (isNotThroughRedis(domain)) {
+            if (stringRedisTemplate.hasKey(domain)) {
                 return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
+//            if (isNotThroughRedis(domain)) {
+//                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-            if (domain.startsWith("shop")) {
-                if (!isCacheType(domain)) {
-                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
-                }
-            }
+//            if (domain.startsWith("shop")) {
+//                if (!isCacheType(domain)) {
+//                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//                }
+//            }
             if (redisClient.exists(restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
@@ -104,7 +106,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             }
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
-            String staticResourceLockExpireTime = redisClient.get("static_resource_lock_expire_time");
+            String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
                 staticResourceLockExpireTime = "180000";
             }
@@ -158,15 +160,18 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getGoodsDetailResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
-            if (isNotThroughRedis(domain)) {
+            if (stringRedisTemplate.hasKey(domain)) {
                 return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
             }
+//            if (isNotThroughRedis(domain)) {
+//                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-            if (domain.startsWith("shop")) {
-                if (!isCacheType(domain)) {
-                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
-                }
-            }
+//            if (domain.startsWith("shop")) {
+//                if (!isCacheType(domain)) {
+//                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//                }
+//            }
             if (redisClient.exists(restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
@@ -176,7 +181,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             }
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
-            String staticResourceLockExpireTime = redisClient.get("static_resource_lock_expire_time");
+            String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
                 staticResourceLockExpireTime = "180000";
             }
@@ -213,8 +218,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
             String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
             long startTime = System.currentTimeMillis();
-            phpStockInterface = String.format(format_php_stock_interface,UUID.randomUUID().toString(),goodsId);
-            jsonStock = restTemplate_stock.getForEntity(phpStockInterface,JSONObject.class).getBody();
+            phpStockInterface = String.format(formatPhpStockInterface,UUID.randomUUID().toString(),goodsId);
+            jsonStock = restTemplateStock.getForEntity(phpStockInterface,JSONObject.class).getBody();
             long endTime = System.currentTimeMillis();
             logger.info("stock_interface_time: "+ (endTime - startTime));
             return jsonStock;
@@ -269,7 +274,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private Boolean isVersionOneHost(String domain) {
-        String staticResourceVersionOneHosts = redisClient.get("static_resource_version_one_hosts");
+        String staticResourceVersionOneHosts = stringRedisTemplate.opsForValue().get("static_resource_version_one_hosts");
         if (!StringUtils.isEmpty(staticResourceVersionOneHosts)) {
             String[] versionOneHosts = staticResourceVersionOneHosts.split(",");
             for (String host : versionOneHosts) {
@@ -287,7 +292,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private Boolean isNotThroughRedis(String domain) {
-        String staticResourceNotCacheHosts = redisClient.get("static_resource_not_cache_hosts");
+        String staticResourceNotCacheHosts = stringRedisTemplate.opsForValue().get("static_resource_not_cache_hosts");
         if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
             String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
             for (String host : notCacheHosts) {
