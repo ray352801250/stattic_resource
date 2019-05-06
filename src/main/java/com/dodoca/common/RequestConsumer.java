@@ -36,13 +36,12 @@ public class RequestConsumer {
     RequestPhpService requestPhpService;
 
     @KafkaListener(topics = {"${spring.kafka.template.default-topic}"})
-    public void listen(ConsumerRecord<?, ?> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+    public void listen(ConsumerRecord<?, ?> record) {
         //判断是否NULL
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());
         if (kafkaMessage.isPresent()) {
             //获取消息
             String message = kafkaMessage.get().toString();
-            logger.info("message: " + message);
             JSONObject jsonMessage = JSON.parseObject(message);
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
@@ -52,7 +51,6 @@ public class RequestConsumer {
             }
             String restUrlRedisKey = jsonMessage.get("restUrlRedisKey").toString();
             String lockKey = restUrlRedisKey + "_distributed_lock";
-            logger.info("lockKey: " + lockKey);
             boolean getLock = redisClient.tryGetDistributedLock(lockKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回
             if (!getLock) {
@@ -61,7 +59,7 @@ public class RequestConsumer {
             JSONObject jsonObject = requestPhpService.requestPhpServer(jsonMessage.get("cookie").toString(), restUrlRedisKey);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
                 redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
-                logger.info(message + " 缓存更新完毕");
+                logger.info(restUrlRedisKey + " 缓存更新完毕");
             }
         }
     }

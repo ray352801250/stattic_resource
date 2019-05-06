@@ -71,6 +71,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String domain = request.getHeader("host");
         String requestUri = request.getHeader("request_uri");
         String cookie = request.getHeader("cookie");
+        if (cookie == null) {
+            cookie = "";
+        }
         jsonLog.put("nginx_request_host", domain);
         jsonLog.put("nginx_request_url", requestUri);
         if (domain == null || requestUri == null) {
@@ -143,12 +146,15 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         JSONObject jsonLog = new JSONObject();
         String domain = request.getHeader("host");
         String requestUri = request.getHeader("request_uri");
+        String cookie = request.getHeader("cookie");
+        if (cookie == null) {
+            cookie = "";
+        }
         jsonLog.put("nginx_request_host", domain);
         jsonLog.put("nginx_request_url", requestUri);
         if (domain == null || requestUri == null) {
             return new JSONObject();
         }
-        String cookie = request.getHeader("cookie");
         String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
         try {
             String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
