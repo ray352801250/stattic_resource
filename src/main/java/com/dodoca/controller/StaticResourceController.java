@@ -75,5 +75,11 @@ public class StaticResourceController {
         return staticResourceServiceImpl.delKey(key, database);
     }
 
+    @RequestMapping("/getExpire")
+    @ResponseBody
+    public JSONObject getExpire(String key, Integer database) {
+        return staticResourceServiceImpl.getExpire(key, database);
+    }
+
 
 }

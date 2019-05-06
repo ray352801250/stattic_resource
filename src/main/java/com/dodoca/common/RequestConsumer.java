@@ -50,13 +50,17 @@ public class RequestConsumer {
                 staticResourceLockExpireTime = "180000";
             }
             String restUrlRedisKey = jsonMessage.get("restUrlRedisKey").toString();
+            Object cookie = jsonMessage.get("cookie");
+            if (cookie == null) {
+                cookie = "";
+            }
             String lockKey = restUrlRedisKey + "_distributed_lock";
             boolean getLock = redisClient.tryGetDistributedLock(lockKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回
             if (!getLock) {
                 return;
             }
-            JSONObject jsonObject = requestPhpService.requestPhpServer(jsonMessage.get("cookie").toString(), restUrlRedisKey);
+            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie.toString(), restUrlRedisKey);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
                 redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
                 logger.info(restUrlRedisKey + " 缓存更新完毕");

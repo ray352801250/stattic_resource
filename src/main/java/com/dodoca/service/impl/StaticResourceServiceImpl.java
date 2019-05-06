@@ -239,7 +239,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     public JSONObject getKey(String key, Integer database) {
         JSONObject jsonObject = new JSONObject();
         String result;
-        if (database == 0) {
+        if (database == null) {
             result = redisClient.get(key);
         }else {
             result = stringRedisTemplate.opsForValue().get(key);
@@ -252,7 +252,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     public JSONObject setKey(String key, String value, Integer database) {
         JSONObject jsonObject = new JSONObject();
         String result = "OK";
-        if (database == 0) {
+        if (database == null) {
             result = redisClient.set(key, value);
         }else {
             stringRedisTemplate.opsForValue().set(key, value);
@@ -265,10 +265,23 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     public JSONObject delKey(String key, Integer database) {
         JSONObject jsonObject = new JSONObject();
         String result = "Success";
-        if (database == 0) {
+        if (database == null) {
             redisClient.del(key);
         }else {
             stringRedisTemplate.delete(key);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject getExpire(String key, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        Long result;
+        if (database == null) {
+            result = redisClient.ttl(key);
+        }else {
+            result = stringRedisTemplate.getExpire(key);
         }
         jsonObject.put(key, result);
         return jsonObject;

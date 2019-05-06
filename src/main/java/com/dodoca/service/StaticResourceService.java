@@ -45,7 +45,7 @@ public interface StaticResourceService {
      * 添加指定redis中 的指定key
      * @param key
      * @param value
-     * @param database redis: 0缓存数据源  1配置数据源
+     * @param database redis: null缓存数据源  int配置数据源
      * @return
      */
     JSONObject setKey(String key, String value, Integer database);
@@ -53,8 +53,16 @@ public interface StaticResourceService {
     /**
      * 删除指定redis中 的指定key
      * @param key
-     * @param database redis: 0缓存数据源  1配置数据源
+     * @param database redis: null缓存数据源  int配置数据源
      * @return
      */
     JSONObject delKey(String key, Integer database);
+
+    /**
+     * 获取指定redis中 的指定key 的过期时间
+     * @param key
+     * @param database redis: null缓存数据源  int配置数据源
+     * @return
+     */
+    JSONObject getExpire(String key, Integer database);
 }
