@@ -40,11 +40,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     String formatPhpStockInterface;
 
     @Autowired
-    @Qualifier("php_restTemplate" )
+    @Qualifier("php_restTemplate")
     private RestTemplate restTemplate;
 
     @Autowired
-    @Qualifier("stock_restTemplate" )
+    @Qualifier("stock_restTemplate")
     RestTemplate restTemplateStock;
 
     @Autowired
@@ -233,6 +233,45 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             logger.error(e.getMessage(),e);
         }
         return jsonStock;
+    }
+
+    @Override
+    public JSONObject getKey(String key, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        String result;
+        if (database == 0) {
+            result = redisClient.get(key);
+        }else {
+            result = stringRedisTemplate.opsForValue().get(key);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject setKey(String key, String value, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        String result = "OK";
+        if (database == 0) {
+            result = redisClient.set(key, value);
+        }else {
+            stringRedisTemplate.opsForValue().set(key, value);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject delKey(String key, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        String result = "Success";
+        if (database == 0) {
+            redisClient.del(key);
+        }else {
+            stringRedisTemplate.delete(key);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
     }
 
 

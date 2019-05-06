@@ -3,8 +3,6 @@ package com.dodoca.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.service.StaticResourceService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,9 +56,24 @@ public class StaticResourceController {
     }
 
 
+    @RequestMapping("/getKey")
+    @ResponseBody
+    public JSONObject getKey(String key, Integer database) {
+        return staticResourceServiceImpl.getKey(key, database);
+    }
 
 
+    @RequestMapping("/setKey")
+    @ResponseBody
+    public JSONObject setKey(String key, String value, Integer database) {
+        return staticResourceServiceImpl.setKey(key, value, database);
+    }
 
+    @RequestMapping("/delKey")
+    @ResponseBody
+    public JSONObject delKey(String key, Integer database) {
+        return staticResourceServiceImpl.delKey(key, database);
+    }
 
 
 }

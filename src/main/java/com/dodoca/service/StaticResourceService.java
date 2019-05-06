@@ -31,4 +31,30 @@ public interface StaticResourceService {
      * @return
      */
     JSONObject phpStockInterface(HttpServletRequest request);
+
+
+    /**
+     * 获取指定redis中 的指定key
+     * @param key
+     * @param database redis: 0缓存数据源  1配置数据源
+     * @return
+     */
+    JSONObject getKey(String key, Integer database);
+
+    /**
+     * 添加指定redis中 的指定key
+     * @param key
+     * @param value
+     * @param database redis: 0缓存数据源  1配置数据源
+     * @return
+     */
+    JSONObject setKey(String key, String value, Integer database);
+
+    /**
+     * 删除指定redis中 的指定key
+     * @param key
+     * @param database redis: 0缓存数据源  1配置数据源
+     * @return
+     */
+    JSONObject delKey(String key, Integer database);
 }
