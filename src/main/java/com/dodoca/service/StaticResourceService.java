@@ -65,4 +65,31 @@ public interface StaticResourceService {
      * @return
      */
     JSONObject getExpire(String key, Integer database);
+
+
+    /**
+     * 获取指定redis中 的指定key
+     * @param key
+     * @param database redis: 0缓存数据源  1配置数据源
+     * @return
+     */
+    JSONObject hgetKey(String key, String filed, Integer database);
+
+    /**
+     *
+     * @param key
+     * @param value
+     * @param database redis: null缓存数据源  int配置数据源
+     * @return
+     */
+    JSONObject hsetKey(String key, String filed, String value, Integer database);
+
+    /**
+     * 删除指定redis中 的指定key
+     * @param key
+     * @param filed
+     * @param database redis: null(0)缓存数据源  int配置数据源
+     * @return
+     */
+    JSONObject hdelKey(String key, String filed, Integer database);
 }

@@ -9,8 +9,6 @@ logging:
   config: classpath:logback-spring.xml
   path: ./logs
 request_http_type: https
-#配置不走缓存的host
-static_resource_not_cache_hosts:
 #key过期时间 s
 dodoca_redis_key_expire_time: 300
 #日志级别

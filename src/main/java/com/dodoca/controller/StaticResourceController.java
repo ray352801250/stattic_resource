@@ -81,5 +81,24 @@ public class StaticResourceController {
         return staticResourceServiceImpl.getExpire(key, database);
     }
 
+    @RequestMapping("/hgetKey")
+    @ResponseBody
+    public JSONObject hgetKey(String key, String filed, Integer database) {
+        return staticResourceServiceImpl.hgetKey(key, filed, database);
+    }
+
+
+    @RequestMapping("/hsetKey")
+    @ResponseBody
+    public JSONObject hsetKey(String key, String filed, String value, Integer database) {
+        return staticResourceServiceImpl.hsetKey(key, filed, value, database);
+    }
+
+    @RequestMapping("/hdelKey")
+    @ResponseBody
+    public JSONObject hdelKey(String key, String filed, Integer database) {
+        return staticResourceServiceImpl.hdelKey(key, filed, database);
+    }
+
 
 }

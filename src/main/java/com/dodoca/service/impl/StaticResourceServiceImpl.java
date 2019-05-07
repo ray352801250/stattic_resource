@@ -268,11 +268,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Override
     public JSONObject delKey(String key, Integer database) {
         JSONObject jsonObject = new JSONObject();
-        String result = "Success";
+        Object result = null;
         if (database == null || database == 0) {
-            redisClient.del(key);
+            result = redisClient.del(key);
         }else {
-            stringRedisTemplate.delete(key);
+            result = stringRedisTemplate.delete(key);
         }
         jsonObject.put(key, result);
         return jsonObject;
@@ -286,6 +286,45 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             result = redisClient.ttl(key);
         }else {
             result = stringRedisTemplate.getExpire(key);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject hgetKey(String key, String filed, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        Object result;
+        if (database == null || database == 0) {
+            result = redisClient.hget(key, filed);
+        }else {
+            result = stringRedisTemplate.opsForHash().get(key, filed);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject hsetKey(String key, String filed, String value, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        Long result = 0L;
+        if (database == null || database == 0) {
+            result = redisClient.hset(key, filed, value);
+        }else {
+            stringRedisTemplate.opsForHash().put(key, filed, value);
+        }
+        jsonObject.put(key, result);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject hdelKey(String key, String filed, Integer database) {
+        JSONObject jsonObject = new JSONObject();
+        Long result;
+        if (database == null || database == 0) {
+            result = redisClient.hdel(key, filed);
+        }else {
+            result = stringRedisTemplate.opsForHash().delete(key, filed);
         }
         jsonObject.put(key, result);
         return jsonObject;
