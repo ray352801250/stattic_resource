@@ -236,7 +236,7 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
                 HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
                 JSONObject jsonRestReturn = restTemplate.exchange(rest_url_redis_key, HttpMethod.GET,requestEntity, JSONObject.class).getBody();
 
-                int stock = requestPhpService.stock_service(goods_id,json_log);
+                int stock = requestPhpService.stockService(goods_id,json_log);
                 jsonRestReturn.put("stock", stock);
                 redisClient.setex(rest_url_redis_key, redisSession, jsonRestReturn.toJSONString());
 
@@ -261,7 +261,7 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
                 //拍卖倒计时
                 HandleRequestUtil.auctionUpdate(jsonRedis);
 
-                int stock = requestPhpService.stock_service(goods_id,json_log);
+                int stock = requestPhpService.stockService(goods_id,json_log);
                 jsonRedis.put("stock", stock);
 
                 long end_time = System.currentTimeMillis();

@@ -60,12 +60,12 @@ public class RequestPhpService {
     /**
      * 调用php 库存服务
      * 重试1次
-     * @param goods_id
+     * @param goodsId
      * @return 库存服务异常返回0
      */
-    public int stock_service(String goods_id,JSONObject json_log){
+    public int stockService(String goodsId, JSONObject jsonLog){
 
-        long start_time = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
         int stock = 0;
 
@@ -73,14 +73,14 @@ public class RequestPhpService {
         String php_stock_interface = null;
         try {
 
-            php_stock_interface = String.format(formatPhpStockInterface ,UUID.randomUUID().toString(),goods_id);
+            php_stock_interface = String.format(formatPhpStockInterface ,UUID.randomUUID().toString(),goodsId);
 
             json_stock = restTemplate_stock.getForEntity(php_stock_interface,JSONObject.class).getBody();
 
             if(json_stock.getString("msg").equals("成功")){
                 stock = json_stock.getJSONObject("result")
                         .getJSONObject("goods")
-                        .getJSONObject(goods_id)
+                        .getJSONObject(goodsId)
                         .getIntValue("stock");
             }else
                 throw new Exception("获取php库存失败, message: "+json_stock.getString("msg"));
@@ -93,15 +93,17 @@ public class RequestPhpService {
                 if(json_stock.getString("msg").equals("成功")){
                     stock = json_stock.getJSONObject("result")
                             .getJSONObject("goods")
-                            .getJSONObject(goods_id)
+                            .getJSONObject(goodsId)
                             .getIntValue("stock");
                 }
             } catch (Exception e2) {
                 logger.error(e2.getMessage(),e2);
+                jsonLog.put("error_type", "stockServer ERROR");
+                jsonLog.put("error_message", e2.getMessage());
             }
         }
         long end_time = System.currentTimeMillis();
-        json_log.put("stock_interface_time", (end_time - start_time));
+        jsonLog.put("stock_interface_time", (end_time - startTime));
         return stock;
 
     }

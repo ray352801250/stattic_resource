@@ -51,6 +51,7 @@ public class RequestConsumer {
             }
             String restUrlRedisKey = jsonMessage.get("restUrlRedisKey").toString();
             Object cookie = jsonMessage.get("cookie");
+            Object domain = jsonMessage.get("domain");
             if (cookie == null) {
                 cookie = "";
             }
@@ -61,10 +62,19 @@ public class RequestConsumer {
                 return;
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie.toString(), restUrlRedisKey);
-            if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
-                logger.info(restUrlRedisKey + " 缓存更新完毕");
+            if (domain != null && !"".equals(domain.toString())) {
+                if (HandleRequestUtil.isNormalResult(jsonObject)) {
+                    redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
+                    logger.info(restUrlRedisKey + " 缓存更新完毕");
+                }else {
+                    redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
+                    redisClient.expire(domain.toString(), 3);
+                    logger.info(restUrlRedisKey + " 请求结果异常,3s后失效");
+                }
+                return;
             }
+            redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
+            logger.info(restUrlRedisKey + " 缓存更新完毕");
         }
     }
 }
