@@ -2,7 +2,6 @@ package com.dodoca.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +22,7 @@ public class HandleRequestUtil {
      * @return
      */
     public static String handleRequestUrl(String requestUrl){
-        if(requestUrl.indexOf("?")<0) {
+        if(requestUrl == null || !requestUrl.contains("?")) {
             return requestUrl;
         }
         int index = requestUrl.indexOf("?") + 1;
@@ -68,7 +67,7 @@ public class HandleRequestUtil {
      * @param jsonRedis
      */
     public static void updateNowDate(JSONObject jsonRedis){
-        if(jsonRedis.toJSONString().indexOf("seckill") <= 0){
+        if(jsonRedis == null || !jsonRedis.toJSONString().contains("seckill")){
             return;
         }
         if (jsonRedis.containsKey("data") && jsonRedis.get("data") instanceof JSONArray){
@@ -104,7 +103,7 @@ public class HandleRequestUtil {
      * @param jsonRedis
      */
     public static void tuanUpdate(JSONObject jsonRedis){
-        if(jsonRedis.containsKey("ump")  && jsonRedis.get("ump") instanceof JSONObject
+        if(jsonRedis != null && jsonRedis.containsKey("ump")  && jsonRedis.get("ump") instanceof JSONObject
                 && jsonRedis.getJSONObject("ump") !=null  && jsonRedis.getJSONObject("ump").containsKey("alone")
                 && jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
 
@@ -132,7 +131,7 @@ public class HandleRequestUtil {
      * @throws ParseException
      */
     public static void auctionUpdate(JSONObject jsonRedis) throws ParseException{
-        if(jsonRedis.containsKey("ump")  && jsonRedis.get("ump") instanceof JSONObject
+        if(jsonRedis != null && jsonRedis.containsKey("ump")  && jsonRedis.get("ump") instanceof JSONObject
                 && jsonRedis.getJSONObject("ump").containsKey("alone")
                 && jsonRedis.getJSONObject("ump").get("alone") instanceof JSONObject){
 

@@ -339,6 +339,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @throws ParseException
      */
     private JSONObject getGoodsDetailFromRedis(String restUrlRedisKey, String goodsId, JSONObject jsonLog, Long startTime) throws ParseException {
+        if (redisClient.get(restUrlRedisKey)== null) {
+            return new JSONObject();
+        }
         JSONObject jsonRedis = JSONObject.parseObject(redisClient.get(restUrlRedisKey));
         //拼团V3倒计时
         HandleRequestUtil.tuanUpdate(jsonRedis);
@@ -360,6 +363,10 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @return
      */
     private JSONObject getHomePageFromRedis(String domain, String restUrlRedisKey, JSONObject jsonLog, Long startTime) {
+        String hget = redisClient.hget(domain, restUrlRedisKey);
+        if (hget == null) {
+            return new JSONObject();
+        }
         JSONObject jsonRedis = JSONObject.parseObject(redisClient.hget(domain, restUrlRedisKey));
         //更新秒杀倒计时 时间
         HandleRequestUtil.updateNowDate(jsonRedis);
@@ -405,27 +412,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         return false;
     }
 
-    /**
-     * 判断商铺类型是否走缓存
-     * @param domain
-     * @return
-     */
-    private Boolean isCacheType(String domain) {
-        String substring = domain.substring(0, domain.indexOf("."));
-        Integer shopId = new Integer(substring.substring(4));
-        Integer platformType = shopMapper.getPlatformTypeById(shopId);
-        if (platformType == null || platformType != 10) {
-            return false;
-        }
-        return true;
-    }
-
-
-
-
 
     /**
-     * 获取结果从一期逻辑
+     * 获取首页结果从一期逻辑
      * @param request
      * @param jsonLog
      * @param startTime
@@ -439,6 +428,13 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         return resource;
     }
 
+    /**
+     * 获取详情页结果从一期逻辑
+     * @param request
+     * @param jsonLog
+     * @param startTime
+     * @return
+     */
     private JSONObject getGoodsDetailResultFromVersionOne(HttpServletRequest request, JSONObject jsonLog, Long startTime) {
         JSONObject resource = staticResourceVersionOneServiceImpl.resourceGoods(request);
         long endTime = System.currentTimeMillis();
