@@ -77,7 +77,7 @@ public class RequestPhpService {
 
             json_stock = restTemplate_stock.getForEntity(php_stock_interface,JSONObject.class).getBody();
 
-            if(json_stock.getString("msg").equals("成功")){
+            if("成功".equals(json_stock.getString("msg"))){
                 stock = json_stock.getJSONObject("result")
                         .getJSONObject("goods")
                         .getJSONObject(goodsId)

@@ -115,7 +115,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 staticResourceLockExpireTime = "180000";
             }
             jsonLog.put("static_resource_lock_expire_time", staticResourceLockExpireTime);
-            boolean getLock = redisClient.tryGetDistributedLock(restUrlRedisKey + "_distributed_lock", uuid,  new Integer(staticResourceLockExpireTime));
+            boolean getLock = redisClient.tryGetDistributedLock("static_distributed_lock_" + restUrlRedisKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回缓存结果
             if (!getLock) {
                 Thread.sleep(2000);
@@ -196,7 +196,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 staticResourceLockExpireTime = "180000";
             }
             jsonLog.put("static_resource_lock_expire_time", staticResourceLockExpireTime);
-            boolean getLock = redisClient.tryGetDistributedLock(restUrlRedisKey + "_distributed_lock", uuid,  new Integer(staticResourceLockExpireTime));
+            boolean getLock = redisClient.tryGetDistributedLock("static_distributed_lock_"+ restUrlRedisKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回缓存结果
             if (!getLock) {
                 Thread.sleep(2000);

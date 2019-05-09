@@ -52,7 +52,7 @@ public class RequestConsumer {
             if (cookie == null) {
                 cookie = "";
             }
-            String lockKey = restUrlRedisKey + "_distributed_lock";
+            String lockKey = "static_distributed_lock_" + restUrlRedisKey;
             boolean getLock = redisClient.tryGetDistributedLock(lockKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回
             if (!getLock) {
