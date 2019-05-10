@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
@@ -44,7 +45,9 @@ public class RequestPhpService {
         JSONObject result = new JSONObject();
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.add("cookie", cookie);
+            if (!StringUtils.isEmpty(cookie)) {
+                headers.add("cookie", cookie);
+            }
             HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
             result = restTemplate.exchange(url, HttpMethod.GET, requestEntity, JSONObject.class).getBody();
         }catch (Exception e) {

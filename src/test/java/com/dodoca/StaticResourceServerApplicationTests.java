@@ -1,7 +1,9 @@
 package com.dodoca;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
+import com.dodoca.service.impl.RequestPhpService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ public class StaticResourceServerApplicationTests {
 
     @Autowired
     private RedisClient redisClient;
+
+    @Autowired
+    RequestPhpService requestPhpService;
 
 
     /**
@@ -87,6 +92,13 @@ public class StaticResourceServerApplicationTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Test
+    public void testRequestPhpService() {
+        JSONObject jsonObject = requestPhpService.requestPhpServer(null, "http://shop13299363.weiba456.com/design/feature.json?t=1557448746948");
+        System.out.println("jsonObject: " + jsonObject);
     }
 
 }

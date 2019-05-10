@@ -76,20 +76,20 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         }
         jsonLog.put("nginx_request_host", domain);
         jsonLog.put("nginx_request_url", requestUri);
-        if (domain == null || requestUri == null) {
+        if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_resources_1532507670=bigdata")) {
             return new JSONObject();
         }
         String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
+        String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
+        String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
-            String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
-            String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (isVersionOneHost(domain)) {
                 return getHomePageResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
             if (stringRedisTemplate.hasKey(domain)) {
-                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+                return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
 //            if (isNotThroughRedis(domain)) {
 //                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
@@ -138,7 +138,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
             jsonLog.put("error_message", e.getMessage());
-            return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+            return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
         }finally {
             logger.info(jsonLog.toJSONString());
         }
@@ -156,22 +156,22 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         }
         jsonLog.put("nginx_request_host", domain);
         jsonLog.put("nginx_request_url", requestUri);
-        if (domain == null || requestUri == null) {
+        if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_goods_detail=bigdata")) {
             return new JSONObject();
         }
         String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
+        String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
+        String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
+        String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
-            String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
             String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
-            String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
-            String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (isVersionOneHost(domain)) {
                 return getGoodsDetailResultFromVersionOne(request, jsonLog, startTime);
             }
             //配置不走缓存的host
             if (stringRedisTemplate.hasKey(domain)) {
-                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+                return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
 //            if (isNotThroughRedis(domain)) {
 //                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
@@ -214,7 +214,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
             jsonLog.put("error_message", e.getMessage());
-            return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+            return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
         }finally {
             logger.info(jsonLog.toJSONString());
         }
@@ -445,14 +445,14 @@ public class StaticResourceServiceImpl implements StaticResourceService {
 
     /**
      * 从php获取结果
-     * @param oldRequestUrl
+     * @param restUrlRedisKey
      * @param cookie
      * @param jsonLog
      * @param startTime
      * @return
      */
-    private JSONObject getResultFromPhp(String oldRequestUrl, String cookie, JSONObject jsonLog, Long startTime) {
-        JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
+    private JSONObject getResultFromPhp(String restUrlRedisKey, String cookie, JSONObject jsonLog, Long startTime) {
+        JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
         long endTime = System.currentTimeMillis();
         jsonLog.put("type", "php");
         jsonLog.put("interface_time", (endTime - startTime));
