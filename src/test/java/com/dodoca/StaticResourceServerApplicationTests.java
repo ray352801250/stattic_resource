@@ -4,6 +4,7 @@ package com.dodoca;
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
 import com.dodoca.service.impl.RequestPhpService;
+import com.dodoca.utils.HandleRequestUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,10 +96,19 @@ public class StaticResourceServerApplicationTests {
     }
 
 
+    /**
+     * 测试请求php
+     */
     @Test
     public void testRequestPhpService() {
         JSONObject jsonObject = requestPhpService.requestPhpServer(null, "http://shop13299363.weiba456.com/design/feature.json?t=1557448746948");
         System.out.println("jsonObject: " + jsonObject);
+    }
+
+    @Test
+    public void testHandleRequestUtil() {
+        String s = HandleRequestUtil.handleRequestUrl("/goods/666219592.json?static_goods_detail=bigdata&t=1557405624280");
+        System.out.println("s: " + s);
     }
 
 }

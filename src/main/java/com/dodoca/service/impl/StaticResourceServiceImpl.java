@@ -127,7 +127,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                     return getHomePageFromRedis(domain, restUrlRedisKey, jsonLog, startTime);
                 }
             }
-            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
+            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
             if (HandleRequestUtil.isNormalResult(jsonObject)) {
                 redisClient.hset(domain, restUrlRedisKey, jsonObject.toJSONString());
             }else {
@@ -208,7 +208,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                     return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime);
                 }
             }
-            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, oldRequestUrl);
+            JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             return jsonObject;
         }catch (Exception e) {
