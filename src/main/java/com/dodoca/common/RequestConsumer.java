@@ -60,13 +60,11 @@ public class RequestConsumer {
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie.toString(), restUrlRedisKey);
             if (domain != null && !"".equals(domain.toString())) {
-                if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                    redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
-                    logger.info(restUrlRedisKey + " 缓存更新完毕");
-                }else {
-                    redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
+                redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
+                logger.info(restUrlRedisKey + " 缓存更新完毕");
+                if (jsonObject.isEmpty()) {
                     redisClient.expire(domain.toString(), 3);
-                    logger.info(restUrlRedisKey + " 请求结果异常,3s后失效");
+                    logger.info(restUrlRedisKey + " 缓存结果异常,3s后失效");
                 }
                 return;
             }

@@ -126,7 +126,7 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
 
 //				JSONObject jsonRestReturn = restTemplate.getForEntity(rest_url_redis_key,JSONObject.class).getBody();
 
-                if(HandleRequestUtil.isNormalResult(jsonRestReturn)){
+                if(jsonRestReturn != null && !jsonRestReturn.isEmpty()){
 
                     redisClient.hset(domain,rest_url_redis_key, jsonRestReturn.toJSONString());
 

@@ -101,7 +101,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 }
             }else {
                 //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
-                if (!isCacheDomain(domain)) {
+                if (notCacheDomain(domain)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }
@@ -135,11 +135,10 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 }
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
-            if (HandleRequestUtil.isNormalResult(jsonObject)) {
-                redisClient.hset(domain, restUrlRedisKey, jsonObject.toJSONString());
-            }else {
-                redisClient.hset(domain, restUrlRedisKey, jsonObject.toJSONString());
+            redisClient.hset(domain, restUrlRedisKey, jsonObject.toJSONString());
+            if (jsonObject.isEmpty()) {
                 redisClient.expire(domain, 3);
+                logger.info(restUrlRedisKey + " 缓存结果异常,3s后失效");
             }
             jsonLog.put("type", "php");
             return jsonObject;
@@ -191,7 +190,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 }
             }else {
                 //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
-                if (!isCacheDomain(domain)) {
+                if (notCacheDomain(domain)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }
@@ -360,14 +359,14 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         return true;
     }
 
-    private boolean isCacheDomain(String domain) {
+    private boolean notCacheDomain(String domain) {
         String subDomain = domain.substring(0, domain.indexOf("."));
         Integer platformTypeBySubDomain = shopMapper.getPlatformTypeBySubDomain(subDomain);
         if (platformTypeBySubDomain == null || platformTypeBySubDomain != 10) {
             stringRedisTemplate.opsForValue().set(domain, domain);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
