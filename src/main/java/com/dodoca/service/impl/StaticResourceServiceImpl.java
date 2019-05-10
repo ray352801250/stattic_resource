@@ -92,14 +92,20 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
 //            if (isNotThroughRedis(domain)) {
-//                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//                return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
 //            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-//            if (domain.startsWith("shop")) {
-//                if (!isCacheType(domain)) {
-//                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
-//                }
-//            }
+            if (domain.startsWith("shop")) {
+                if (!isCacheType(domain)) {
+                    return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
+                }
+            }else {
+                //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
+                if (!isCacheDomain(domain)) {
+                    return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
+                }
+            }
+
             if (redisClient.hexists(domain, restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("domain", domain);
@@ -112,6 +118,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //获取分布式锁的持有时间
             String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
+                stringRedisTemplate.opsForValue().set("static_resource_lock_expire_time", "180000");
                 staticResourceLockExpireTime = "180000";
             }
             jsonLog.put("static_resource_lock_expire_time", staticResourceLockExpireTime);
@@ -134,6 +141,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 redisClient.hset(domain, restUrlRedisKey, jsonObject.toJSONString());
                 redisClient.expire(domain, 3);
             }
+            jsonLog.put("type", "php");
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -174,14 +182,19 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
 //            if (isNotThroughRedis(domain)) {
-//                return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+//                return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
 //            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
-//            if (domain.startsWith("shop")) {
-//                if (!isCacheType(domain)) {
-//                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
-//                }
-//            }
+            if (domain.startsWith("shop")) {
+                if (!isCacheType(domain)) {
+                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+                }
+            }else {
+                //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
+                if (!isCacheDomain(domain)) {
+                    return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
+                }
+            }
             if (redisClient.exists(restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
@@ -210,6 +223,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
+            jsonLog.put("type", "php");
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -330,6 +344,31 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         return jsonObject;
     }
 
+    /**
+     * 判断商铺类型是否走缓存
+     * @param domain
+     * @return
+     */
+    private Boolean isCacheType(String domain) {
+        String substring = domain.substring(0, domain.indexOf("."));
+        Integer shopId = new Integer(substring.substring(4));
+        Integer platformType = shopMapper.getPlatformTypeById(shopId);
+        if (platformType == null || platformType != 10) {
+            stringRedisTemplate.opsForValue().set(domain, domain);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isCacheDomain(String domain) {
+        String subDomain = domain.substring(0, domain.indexOf("."));
+        Integer platformTypeBySubDomain = shopMapper.getPlatformTypeBySubDomain(subDomain);
+        if (platformTypeBySubDomain == null || platformTypeBySubDomain != 10) {
+            stringRedisTemplate.opsForValue().set(domain, domain);
+            return false;
+        }
+        return true;
+    }
 
     /**
      * 更新商品详情页中的活动倒计时时间
