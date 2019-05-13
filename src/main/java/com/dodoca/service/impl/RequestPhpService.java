@@ -1,6 +1,7 @@
 package com.dodoca.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.dodoca.exception.MyServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,7 @@ public class RequestPhpService {
         }catch (Exception e) {
             logger.error("请求php服务异常!!!!!!!!!! url: " + url);
             logger.error(e.getMessage(), e);
-            return result;
+            throw new MyServiceException("请求php服务异常!!!!!!!!!! url: " + url + "; errorMessage: " + e.getMessage(), 500);
         }
         return result;
     }

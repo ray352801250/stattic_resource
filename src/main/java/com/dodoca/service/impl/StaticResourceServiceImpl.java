@@ -79,7 +79,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_resources_1532507670=bigdata")) {
             return new JSONObject();
         }
-        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
+//        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
         String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
@@ -166,7 +166,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_goods_detail=bigdata")) {
             return new JSONObject();
         }
-        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
+//        String oldRequestUrl = requestHttpType + "://" + domain + requestUri;
         String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
         String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
@@ -186,7 +186,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
             if (domain.startsWith("shop")) {
                 if (!isCacheType(domain)) {
-                    return getResultFromPhp(oldRequestUrl, cookie, jsonLog, startTime);
+                    return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }else {
                 //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
@@ -225,7 +225,6 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             jsonLog.put("type", "php");
             return jsonObject;
         }catch (Exception e) {
-            logger.error(e.getMessage(),e);
             jsonLog.put("error_message", e.getMessage());
             return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
         }finally {
