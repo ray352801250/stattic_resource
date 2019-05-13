@@ -18,6 +18,8 @@ dodoca_rest_connection_timeout: 60000
 #库存服务rest请求超时时间
 dodoca_rest_stock_read_timeout: 20000
 dodoca_rest_stock_connection_timeout: 20000
+#需要走缓存的店铺类型 shop表 platform_type, 多个类型之间用","相隔
+static_cache_platform_type: 10
 
 
 ---

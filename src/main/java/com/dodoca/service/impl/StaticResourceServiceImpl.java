@@ -39,6 +39,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Value("${dodoca_php_stock_interface}")
     String formatPhpStockInterface;
 
+    @Value("${static_cache_platform_type}")
+    String staticCachePlatformType;
+
     @Autowired
     @Qualifier("php_restTemplate")
     private RestTemplate restTemplate;
@@ -96,12 +99,17 @@ public class StaticResourceServiceImpl implements StaticResourceService {
 //            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
             if (domain.startsWith("shop")) {
-                if (!isCacheType(domain)) {
+                String substring = domain.substring(0, domain.indexOf("."));
+                Integer shopId = new Integer(substring.substring(4));
+                Integer platformType = shopMapper.getPlatformTypeById(shopId);
+                if (!isCacheType(domain, platformType)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }else {
                 //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
-                if (notCacheDomain(domain)) {
+                String subDomain = domain.substring(0, domain.indexOf("."));
+                Integer platformType = shopMapper.getPlatformTypeBySubDomain(subDomain);
+                if (!isCacheType(domain, platformType)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }
@@ -185,12 +193,17 @@ public class StaticResourceServiceImpl implements StaticResourceService {
 //            }
             //shop开头的就根据shopId获取该商铺的类型,如果是平台板/商超版 不走缓存
             if (domain.startsWith("shop")) {
-                if (!isCacheType(domain)) {
+                String substring = domain.substring(0, domain.indexOf("."));
+                Integer shopId = new Integer(substring.substring(4));
+                Integer platformType = shopMapper.getPlatformTypeById(shopId);
+                if (!isCacheType(domain, platformType)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }else {
                 //非shop开头的就根据domain获取该商铺的类型,如果是平台板/商超版 不走缓存
-                if (notCacheDomain(domain)) {
+                String subDomain = domain.substring(0, domain.indexOf("."));
+                Integer platformType = shopMapper.getPlatformTypeBySubDomain(subDomain);
+                if (!isCacheType(domain, platformType)) {
                     return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
                 }
             }
@@ -246,6 +259,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             logger.info("stock_interface_time: "+ (endTime - startTime));
             return jsonStock;
         } catch (Exception e) {
+            logger.error("请求库存服务异常");
             logger.error(e.getMessage(),e);
         }
         return jsonStock;
@@ -347,24 +361,16 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @param domain
      * @return
      */
-    private Boolean isCacheType(String domain) {
-        String substring = domain.substring(0, domain.indexOf("."));
-        Integer shopId = new Integer(substring.substring(4));
-        Integer platformType = shopMapper.getPlatformTypeById(shopId);
-        if (platformType == null || platformType != 10) {
-            stringRedisTemplate.opsForValue().set(domain, domain);
-            return false;
+    private Boolean isCacheType(String domain, Integer platformType) {
+        String[] platformTypes = {"10"};
+        if (!StringUtils.isEmpty(staticCachePlatformType)) {
+            platformTypes = staticCachePlatformType.split(",");
         }
-        return true;
-    }
-
-    private boolean notCacheDomain(String domain) {
-        String subDomain = domain.substring(0, domain.indexOf("."));
-        Integer platformTypeBySubDomain = shopMapper.getPlatformTypeBySubDomain(subDomain);
-        if (platformTypeBySubDomain == null || platformTypeBySubDomain != 10) {
-            stringRedisTemplate.opsForValue().set(domain, domain);
-            return true;
+        if (platformType == null) return false;
+        for (String str : platformTypes) {
+            if (platformType.equals(new Integer(str))) return true;
         }
+        stringRedisTemplate.opsForValue().set(domain, domain);
         return false;
     }
 
@@ -436,18 +442,18 @@ public class StaticResourceServiceImpl implements StaticResourceService {
      * @param domain
      * @return
      */
-    private Boolean isNotThroughRedis(String domain) {
-        String staticResourceNotCacheHosts = stringRedisTemplate.opsForValue().get("static_resource_not_cache_hosts");
-        if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
-            String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
-            for (String host : notCacheHosts) {
-                if (host.equals(domain)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+//    private Boolean isNotThroughRedis(String domain) {
+//        String staticResourceNotCacheHosts = stringRedisTemplate.opsForValue().get("static_resource_not_cache_hosts");
+//        if (!StringUtils.isEmpty(staticResourceNotCacheHosts)) {
+//            String[] notCacheHosts = staticResourceNotCacheHosts.split(",");
+//            for (String host : notCacheHosts) {
+//                if (host.equals(domain)) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
 
     /**
