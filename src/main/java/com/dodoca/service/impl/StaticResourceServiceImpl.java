@@ -339,6 +339,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             result = redisClient.hset(key, filed, value);
         }else {
             stringRedisTemplate.opsForHash().put(key, filed, value);
+            result = 1L;
         }
         jsonObject.put(key, result);
         return jsonObject;
