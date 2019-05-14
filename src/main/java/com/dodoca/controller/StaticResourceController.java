@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
  * @Description:
  */
 @Controller
-@RequestMapping("/static/")
+@RequestMapping("/static")
 public class StaticResourceController {
 
     @Autowired
