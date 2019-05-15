@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- 此xml在spring-boot-1.5.3.RELEASE.jar里 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+  <!-- 开启后可以通过jmx动态控制日志级别(springboot Admin的功能) -->
+  <!--<jmxConfigurator/>-->
+
+  <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+  <springProperty scope="context" name="logPath" source="logging.path"/>
+  <property name="LOG_PATH" value="${logPath}/${springAppName}"/>
+  <property name="LOG_FILE" value="${springAppName}"/>
+
+  <!--输出到控制台-->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date [%level] [%thread] %logger{60}:%line  %msg%n</pattern>
+      <charset class="java.nio.charset.Charset">UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <!-- 输出日志到文件 -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${LOG_PATH}/${LOG_FILE}.log</File>
+    <encoder>
+      <pattern>%date [%level] [%thread] %logger{60}:%line  %msg%n</pattern>
+      <charset class="java.nio.charset.Charset">UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- 添加.gz 历史日志会启用压缩 大大缩小日志文件所占空间 -->
+      <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory><!--  保留30天日志 -->
+    </rollingPolicy>
+  </appender>
+
+  <!-- 出错日志 appender  -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${LOG_PATH}/${LOG_FILE}.error.log</File>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <encoder>
+      <pattern>%date [%level] [%thread] %logger{60}:%line  %msg%n</pattern>
+      <charset class="java.nio.charset.Charset">UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- 按天回滚 daily -->
+      <!-- log.dir 在maven profile里配置 -->
+      <FileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.error.log</FileNamePattern>
+      <!-- 日志最大的历史 60天 -->
+      <maxHistory>30</maxHistory>
+      <!--<timeBasedFileNamingAndTriggeringPolicy  class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">-->
+      <!--&lt;!&ndash; maxFileSize:这是活动文件的大小，默认值是10MB,本篇设置为1KB，只是为了演示 &ndash;&gt;-->
+      <!--<maxFileSize>1024MB</maxFileSize>-->
+      <!--</timeBasedFileNamingAndTriggeringPolicy>-->
+    </rollingPolicy>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="ERROR_FILE"/>
+  </root>
+</configuration>
