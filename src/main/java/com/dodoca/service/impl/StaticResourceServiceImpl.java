@@ -134,6 +134,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 logger.info(restUrlRedisKey + " 缓存结果异常,3s后失效");
             }
             jsonLog.put("type", "php");
+            long endTime = System.currentTimeMillis();
+            jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -207,6 +209,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             jsonLog.put("type", "php");
+            long endTime = System.currentTimeMillis();
+            jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
             jsonLog.put("error_message", e.getMessage());
