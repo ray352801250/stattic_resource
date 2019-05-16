@@ -1,13 +1,13 @@
 spring:
   profiles:
-    active: dev
+    active: pro
   application:
     name: static_resource_server
 server:
   port: 7774
 logging:
   config: classpath:logback-spring.xml
-  path: ./logs
+  path: /data/logs
 #key过期时间(一期用) s
 dodoca_redis_key_expire_time: 300
 #日志级别(一期用)
@@ -119,6 +119,8 @@ spring:
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
 
+
+
 ---
 spring:
   profiles: qa
@@ -216,6 +218,8 @@ spring:
 dodoca_php_stock_interface: http://172.16.255.27:9701/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
 
+
+
 ---
 spring:
   profiles: jicheng
@@ -312,6 +316,10 @@ spring:
 #库存服务地址
 dodoca_php_stock_interface: http://172.16.255.26:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https
+
+
+
+
 ---
 spring:
   profiles: pro
@@ -405,7 +413,6 @@ spring:
       auto-offset-reset: latest
     template:
       default-topic: wxrrd_static_resource_server_request
-
 #库存服务地址
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https

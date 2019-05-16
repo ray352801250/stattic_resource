@@ -92,26 +92,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //获取商铺类型 shopPlatformType 1走缓存,2不走缓存
             Object shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             if (StringUtils.isEmpty(shopPlatformType)) {
-                if (domain.startsWith("shop")) {
-                    String substring = domain.substring(0, domain.indexOf("."));
-                    Integer shopId = new Integer(substring.substring(4));
-                    //shop开头的就根据shopId获取该商铺的类型
-                    Integer platformType = shopMapper.getPlatformTypeById(shopId);
-                    if (!isCacheType(domain, platformType)) {
-                        return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
-                    }
-                }else {
-                    String subDomain = domain.substring(0, domain.indexOf("."));
-                    //非shop开头的就根据domain获取该商铺的类型
-                    Integer platformType = shopMapper.getPlatformTypeBySubDomain(subDomain);
-                    if (!isCacheType(domain, platformType)) {
-                        return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
-                    }
-                }
+                cachePlatformType(domain);
                 shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             }
             //表示对应的域名不需要走缓存
-            if (shopPlatformType != null && shopPlatformType.equals("2")){
+            if (shopPlatformType == null || shopPlatformType.equals("2")){
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
             if (redisClient.hexists(domain, restUrlRedisKey)) {
@@ -149,6 +134,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 logger.info(restUrlRedisKey + " 缓存结果异常,3s后失效");
             }
             jsonLog.put("type", "php");
+            long endTime = System.currentTimeMillis();
+            jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
             logger.error(e.getMessage(),e);
@@ -186,26 +173,11 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //获取商铺类型 shopPlatformType 1走缓存,2不走缓存
             Object shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             if (StringUtils.isEmpty(shopPlatformType)) {
-                if (domain.startsWith("shop")) {
-                    String substring = domain.substring(0, domain.indexOf("."));
-                    Integer shopId = new Integer(substring.substring(4));
-                    //shop开头的就根据shopId获取该商铺的类型
-                    Integer platformType = shopMapper.getPlatformTypeById(shopId);
-                    if (!isCacheType(domain, platformType)) {
-                        return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
-                    }
-                }else {
-                    String subDomain = domain.substring(0, domain.indexOf("."));
-                    //非shop开头的就根据domain获取该商铺的类型
-                    Integer platformType = shopMapper.getPlatformTypeBySubDomain(subDomain);
-                    if (!isCacheType(domain, platformType)) {
-                        return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
-                    }
-                }
+                cachePlatformType(domain);
                 shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             }
             //表示对应的域名不需要走缓存
-            if (shopPlatformType != null && shopPlatformType.equals("2")){
+            if (shopPlatformType == null || shopPlatformType.equals("2")){
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
             if (redisClient.exists(restUrlRedisKey)) {
@@ -237,6 +209,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie, restUrlRedisKey);
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             jsonLog.put("type", "php");
+            long endTime = System.currentTimeMillis();
+            jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
             jsonLog.put("error_message", e.getMessage());
@@ -359,24 +333,45 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     }
 
     /**
-     * 判断商铺类型是否走缓存
+     * 将域名需不需要走不走缓存写入redis
      * @param domain
      * @return
      */
-    private Boolean isCacheType(String domain, Integer platformType) {
+    private void putCacheType(String domain, Integer platformType) {
         String[] platformTypes = {"10"};
         if (!StringUtils.isEmpty(staticCachePlatformType)) {
             platformTypes = staticCachePlatformType.split(",");
         }
-        if (platformType == null) return false;
+        if (platformType == null) {
+            return ;
+        }
         for (String str : platformTypes) {
             if (platformType.equals(new Integer(str))) {
+                //需要走缓存
                 stringRedisTemplate.opsForHash().put("shop_platform_type", domain, "1");
-                return true;
+                return ;
             }
         }
         stringRedisTemplate.opsForHash().put("shop_platform_type", domain, "2");
-        return false;
+    }
+
+    /**
+     * 查询域名对应商铺的类型查出,判读是否需要走缓存
+     * @param domain
+     */
+    private void cachePlatformType(String domain) {
+        if (domain.startsWith("shop")) {
+            String substring = domain.substring(0, domain.indexOf("."));
+            Integer shopId = new Integer(substring.substring(4));
+            //shop开头的就根据shopId获取该商铺的类型
+            Integer platformType = shopMapper.getPlatformTypeById(shopId);
+            putCacheType(domain, platformType);
+        }else {
+            String subDomain = domain.substring(0, domain.indexOf("."));
+            //非shop开头的就根据domain获取该商铺的类型
+            Integer platformType = shopMapper.getPlatformTypeBySubDomain(subDomain);
+            putCacheType(domain, platformType);
+        }
     }
 
     /**
