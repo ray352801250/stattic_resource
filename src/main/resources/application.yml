@@ -1,0 +1,418 @@
+spring:
+  profiles:
+    active: pro
+  application:
+    name: static_resource_server
+server:
+  port: 7774
+logging:
+  config: classpath:logback-spring.xml
+  path: /data/logs
+#key过期时间(一期用) s
+dodoca_redis_key_expire_time: 300
+#日志级别(一期用)
+dodoca_log_level: 0
+#php服务rest请求超时时间
+dodoca_rest_read_timeout: 60000
+dodoca_rest_connection_timeout: 60000
+#库存服务rest请求超时时间
+dodoca_rest_stock_read_timeout: 20000
+dodoca_rest_stock_connection_timeout: 20000
+#需要走缓存的店铺类型 shop表 platform_type, 多个类型之间用","相隔
+static_cache_platform_type: 10
+
+
+---
+spring:
+  profiles: dev
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+#      初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时 默认0
+    initial-size: 5
+    #      最小连接池数量
+    min-idle: 5
+    #      最大连接池数量 默认8
+    max-active: 10
+    ##      获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
+    max-wait: 60000
+    #     配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    time-between-eviction-runs-millis: 60000
+    #      配置一个连接在池中最小生存的时间，单位是毫秒
+    min-evictable-idle-time-millis: 300000
+    validation-query: SELECT 1
+    #      建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效
+    test-while-idle: true
+    #      申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-borrow: false
+    #      归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-return: false
+    #    是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭 默认false
+    #      poolPreparedStatements: false
+    #      	要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+    #      maxpoolpreparedstatementperconnectionsize: 20
+    #   配置监控统计
+    #      filters: stat,wall
+    #    通过connectProperties属性来打开mergeSql功能；慢SQL记录
+    #      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+#    数据库连接超时时间，2.0 中该参数的类型为Duration，这里在配置的时候需要指明单位
+    timeout: 500
+    jedis:
+#    lettuce:
+      pool:
+#      # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 300
+#        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+#        # 连接池中的最大空闲连接
+        max-idle: 8
+#        # 连接池中的最小空闲连接
+        min-idle: 0
+# 从redis读取配置信息
+  redis_config:
+    database: 1
+    host: 127.0.0.1
+    port: 6379
+    password: 123456
+    pool:
+    #  # 连接池最大连接数（使用负值表示没有限制）
+      max-active: 200
+    #  # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      max-wait: -1
+    #  # 连接池中的最大空闲连接
+      max-idle: 8
+    #  # 连接池中的最小空闲连接
+      min-idle: 0
+  kafka:
+  ##  -------------kafka----------------online
+    bootstrap-servers: 127.0.0.1:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 0
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: static_resource_server_1
+      enable-auto-commit: true
+      auto-commit-interval: 6000
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#  earliest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费
+#  latest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据
+#  none
+#  topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常
+      auto-offset-reset: latest
+    template:
+      default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
+request_http_type: http
+
+
+
+---
+spring:
+  profiles: qa
+  datasource:
+    url: jdbc:mysql://10.10.3.14:32742/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: maxwell
+    password: qa_4rfv%TGB
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+#      初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时 默认0
+    initial-size: 5
+    #      最小连接池数量
+    min-idle: 5
+    #      最大连接池数量 默认8
+    max-active: 10
+    ##      获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
+    max-wait: 60000
+    #     配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    time-between-eviction-runs-millis: 60000
+    #      配置一个连接在池中最小生存的时间，单位是毫秒
+    min-evictable-idle-time-millis: 300000
+    validation-query: SELECT 1
+    #      建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效
+    test-while-idle: true
+    #      申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-borrow: false
+    #      归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-return: false
+    #    是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭 默认false
+    #      poolPreparedStatements: false
+    #      	要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+    #      maxpoolpreparedstatementperconnectionsize: 20
+    #   配置监控统计
+    #      filters: stat,wall
+    #    通过connectProperties属性来打开mergeSql功能；慢SQL记录
+    #      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  redis:
+    database: 0
+    host: 10.10.3.14
+    port: 31386
+    password: lajiredis123
+#    数据库连接超时时间，2.0 中该参数的类型为Duration，这里在配置的时候需要指明单位
+    timeout: 500
+    jedis:
+#    lettuce:
+      pool:
+#      # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 300
+#        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+#        # 连接池中的最大空闲连接
+        max-idle: 8
+#        # 连接池中的最小空闲连接
+        min-idle: 0
+# 从redis读取配置信息
+  redis_config:
+    database: 1
+    host: 10.10.3.14
+    port: 31386
+    password: lajiredis123
+    pool:
+    #  # 连接池最大连接数（使用负值表示没有限制）
+      max-active: 200
+    #  # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      max-wait: -1
+    #  # 连接池中的最大空闲连接
+      max-idle: 8
+    #  # 连接池中的最小空闲连接
+      min-idle: 0
+  kafka:
+  ##  -------------kafka----------------
+    bootstrap-servers: 10.10.3.8:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 0
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: static_resource_server_01
+      enable-auto-commit: true
+      auto-commit-interval: 6000
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#  earliest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费
+#  latest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据
+#  none
+#  topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常
+      auto-offset-reset: latest
+    template:
+      default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.16.255.27:9701/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
+request_http_type: http
+
+
+
+---
+spring:
+  profiles: jicheng
+  datasource:
+    url: jdbc:mysql://192.144.206.104:32704/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: maxwell
+    password: 4rfv&UJM
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+#      初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时 默认0
+    initial-size: 5
+    #      最小连接池数量
+    min-idle: 5
+    #      最大连接池数量 默认8
+    max-active: 10
+    ##      获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
+    max-wait: 60000
+    #     配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    time-between-eviction-runs-millis: 60000
+    #      配置一个连接在池中最小生存的时间，单位是毫秒
+    min-evictable-idle-time-millis: 300000
+    validation-query: SELECT 1
+    #      建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效
+    test-while-idle: true
+    #      申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-borrow: false
+    #      归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-return: false
+    #    是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭 默认false
+    #      poolPreparedStatements: false
+    #      	要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+    #      maxpoolpreparedstatementperconnectionsize: 20
+    #   配置监控统计
+    #      filters: stat,wall
+    #    通过connectProperties属性来打开mergeSql功能；慢SQL记录
+    #      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  redis:
+    database: 0
+    host: 10.10.3.14
+    port: 31386
+    password: lajiredis123
+#    数据库连接超时时间，2.0 中该参数的类型为Duration，这里在配置的时候需要指明单位
+    timeout: 500
+    jedis:
+#    lettuce:
+      pool:
+#      # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 300
+#        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+#        # 连接池中的最大空闲连接
+        max-idle: 8
+#        # 连接池中的最小空闲连接
+        min-idle: 0
+# 从redis读取配置信息
+  redis_config:
+    database: 1
+    host: 10.10.3.14
+    port: 31386
+    password: lajiredis123
+    pool:
+    #  # 连接池最大连接数（使用负值表示没有限制）
+      max-active: 200
+    #  # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      max-wait: -1
+    #  # 连接池中的最大空闲连接
+      max-idle: 8
+    #  # 连接池中的最小空闲连接
+      min-idle: 0
+  kafka:
+  ##  -------------kafka----------------
+    bootstrap-servers: 10.10.3.8:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 0
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: static_resource_server_01
+      enable-auto-commit: true
+      auto-commit-interval: 6000
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#  earliest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费
+#  latest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据
+#  none
+#  topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常
+      auto-offset-reset: latest
+    template:
+      default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.16.255.26:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
+request_http_type: https
+
+
+
+
+---
+spring:
+  profiles: pro
+  datasource:
+    url: jdbc:mysql://172.17.0.25:3881/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: maxwell
+    password: M510A987uojyjjj0210maxwell
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+#      初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时 默认0
+    initial-size: 5
+    #      最小连接池数量
+    min-idle: 5
+    #      最大连接池数量 默认8
+    max-active: 10
+    ##      获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
+    max-wait: 60000
+    #     配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    time-between-eviction-runs-millis: 60000
+    #      配置一个连接在池中最小生存的时间，单位是毫秒
+    min-evictable-idle-time-millis: 300000
+    validation-query: SELECT 1
+    #      建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效
+    test-while-idle: true
+    #      申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-borrow: false
+    #      归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能
+    test-on-return: false
+    #    是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭 默认false
+    #      poolPreparedStatements: false
+    #      	要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+    #      maxpoolpreparedstatementperconnectionsize: 20
+    #   配置监控统计
+    #      filters: stat,wall
+    #    通过connectProperties属性来打开mergeSql功能；慢SQL记录
+    #      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  redis:
+    database: 0
+    host: rrd-static-cache.redis.rds.aliyuncs.com
+    port: 6379
+    password: Wu312MatYCH5Sn4S
+#    数据库连接超时时间，2.0 中该参数的类型为Duration，这里在配置的时候需要指明单位
+    timeout: 500
+    jedis:
+#    lettuce:
+      pool:
+#      # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 300
+#        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+#        # 连接池中的最大空闲连接
+        max-idle: 8
+#        # 连接池中的最小空闲连接
+        min-idle: 0
+# 从redis读取配置信息
+  redis_config:
+    database: 1
+    host: rrd-static-cache.redis.rds.aliyuncs.com
+    port: 6379
+    password: Wu312MatYCH5Sn4S
+    pool:
+    #  # 连接池最大连接数（使用负值表示没有限制）
+      max-active: 200
+    #  # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      max-wait: -1
+    #  # 连接池中的最大空闲连接
+      max-idle: 8
+    #  # 连接池中的最小空闲连接
+      min-idle: 0
+  kafka:
+  ##  -------------kafka----------------
+    bootstrap-servers: 172.17.0.143:9092,172.17.0.144:9092,172.17.0.49:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 0
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: static_resource_server_01
+      enable-auto-commit: true
+      auto-commit-interval: 6000
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#  earliest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费
+#  latest
+#  当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据
+#  none
+#  topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常
+      auto-offset-reset: latest
+    template:
+      default-topic: wxrrd_static_resource_server_request
+#库存服务地址
+dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
+request_http_type: https
