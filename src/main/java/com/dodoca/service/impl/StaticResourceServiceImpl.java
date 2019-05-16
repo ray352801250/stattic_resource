@@ -177,7 +177,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             }
             //表示对应的域名不需要走缓存
-            if (shopPlatformType != null && shopPlatformType.equals("2")){
+            if (shopPlatformType == null || shopPlatformType.equals("2")){
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
             if (redisClient.exists(restUrlRedisKey)) {
