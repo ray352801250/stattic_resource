@@ -96,7 +96,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 shopPlatformType = stringRedisTemplate.opsForHash().get("shop_platform_type", domain);
             }
             //表示对应的域名不需要走缓存
-            if (shopPlatformType != null && shopPlatformType.equals("2")){
+            if (shopPlatformType == null || shopPlatformType.equals("2")){
                 return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime);
             }
             if (redisClient.hexists(domain, restUrlRedisKey)) {
@@ -342,7 +342,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (!StringUtils.isEmpty(staticCachePlatformType)) {
             platformTypes = staticCachePlatformType.split(",");
         }
-        if (platformType == null) return ;
+        if (platformType == null) {
+            return ;
+        }
         for (String str : platformTypes) {
             if (platformType.equals(new Integer(str))) {
                 //需要走缓存
