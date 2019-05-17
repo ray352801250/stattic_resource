@@ -6,7 +6,7 @@
 	<groupId>static_resource_server</groupId>
 	<artifactId>static_resource_server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 
 	<name>static_resource_server</name>
 	<description>static_resource_server</description>

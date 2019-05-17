@@ -26,7 +26,7 @@ public class StaticResourceController {
      * @param request
      * @return
      */
-    @RequestMapping("/homePageResource")
+    @RequestMapping("/resource")
     @ResponseBody
     public JSONObject homePageResource(HttpServletRequest request) {
         return staticResourceServiceImpl.homePageResource(request);
@@ -37,7 +37,7 @@ public class StaticResourceController {
      * @param request
      * @return
      */
-    @RequestMapping("/goodsDetailResource")
+    @RequestMapping("/resource_goods")
     @ResponseBody
     public JSONObject goodsDetailResource(HttpServletRequest request) {
         return staticResourceServiceImpl.goodsDetailResource(request);
