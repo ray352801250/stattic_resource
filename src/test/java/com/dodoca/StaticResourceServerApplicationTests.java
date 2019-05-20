@@ -3,7 +3,9 @@ package com.dodoca;
 
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.RedisClient;
+import com.dodoca.dao.AloneActivityRecodeMapper;
 import com.dodoca.service.impl.RequestPhpService;
+import com.dodoca.utils.DateUtils_java8;
 import com.dodoca.utils.HandleRequestUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import redis.clients.jedis.JedisPool;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
@@ -27,6 +30,9 @@ public class StaticResourceServerApplicationTests {
 
     @Autowired
     RequestPhpService requestPhpService;
+
+    @Autowired
+    AloneActivityRecodeMapper aloneActivityRecodeMapper;
 
 
     /**
@@ -109,6 +115,15 @@ public class StaticResourceServerApplicationTests {
     public void testHandleRequestUtil() {
         String s = HandleRequestUtil.handleRequestUrl("/goods/666219592.json?static_goods_detail=bigdata&t=1557405624280");
         System.out.println("s: " + s);
+    }
+
+    /**
+     * 测试商品活动信息查询
+     */
+    @Test
+    public void testAloneActivityRecodeMapper() {
+        String actType = aloneActivityRecodeMapper.getActType(1210514621, DateUtils_java8.formatLoalDateTime(LocalDateTime.now()));
+        System.out.println(actType);
     }
 
 }
