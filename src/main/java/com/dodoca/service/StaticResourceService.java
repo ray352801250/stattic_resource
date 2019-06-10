@@ -3,6 +3,7 @@ package com.dodoca.service;
 import com.alibaba.fastjson.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @Author: TianGuangHui
@@ -16,14 +17,14 @@ public interface StaticResourceService {
      * @param request
      * @return
      */
-    JSONObject homePageResource(HttpServletRequest request);
+    JSONObject homePageResource(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 详情页请求
      * @param request
      * @return
      */
-    JSONObject goodsDetailResource(HttpServletRequest request);
+    JSONObject goodsDetailResource(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 模拟请求php的库存服务

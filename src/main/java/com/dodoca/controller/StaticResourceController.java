@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @Author: TianGuangHui
@@ -28,8 +29,8 @@ public class StaticResourceController {
      */
     @RequestMapping("/resource")
     @ResponseBody
-    public JSONObject homePageResource(HttpServletRequest request) {
-        return staticResourceServiceImpl.homePageResource(request);
+    public JSONObject homePageResource(HttpServletRequest request, HttpServletResponse response) {
+        return staticResourceServiceImpl.homePageResource(request, response);
     }
 
     /**
@@ -39,8 +40,8 @@ public class StaticResourceController {
      */
     @RequestMapping("/resource_goods")
     @ResponseBody
-    public JSONObject goodsDetailResource(HttpServletRequest request) {
-        return staticResourceServiceImpl.goodsDetailResource(request);
+    public JSONObject goodsDetailResource(HttpServletRequest request, HttpServletResponse response) {
+        return staticResourceServiceImpl.goodsDetailResource(request, response);
     }
 
 
