@@ -44,7 +44,7 @@ public class RequestConsumer {
             //获取分布式锁的持有时间
             String staticResourceLockExpireTime = redisClient.get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
-                staticResourceLockExpireTime = "180000";
+                staticResourceLockExpireTime = "10000";
             }
             String restUrlRedisKey = jsonMessage.get("restUrlRedisKey").toString();
             Object cookie = jsonMessage.get("cookie");
