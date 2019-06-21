@@ -112,6 +112,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 jsonMessage.put("domain", domain);
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
+                jsonMessage.put("ts", LocalDateTime.now());
                 kafkaSender.send(jsonMessage);
                 return getHomePageFromRedis(domain,restUrlRedisKey, jsonLog, startTime, response);
             }
@@ -198,6 +199,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
+                jsonMessage.put("ts", LocalDateTime.now());
                 kafkaSender.send(jsonMessage);
                 return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime, response);
             }
