@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -112,7 +113,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 jsonMessage.put("domain", domain);
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
-                jsonMessage.put("ts", LocalDateTime.now());
+                Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+                jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
                 return getHomePageFromRedis(domain,restUrlRedisKey, jsonLog, startTime, response);
             }
@@ -199,7 +201,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
-                jsonMessage.put("ts", LocalDateTime.now());
+                Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+                jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
                 return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime, response);
             }
