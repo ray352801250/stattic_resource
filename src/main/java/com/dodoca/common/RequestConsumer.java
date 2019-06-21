@@ -9,6 +9,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,6 +34,10 @@ public class RequestConsumer {
     @Autowired
     RequestPhpService requestPhpService;
 
+    @Autowired
+    @Qualifier("redisConfigTemplate")
+    StringRedisTemplate stringRedisTemplate;
+
     @KafkaListener(topics = {"${spring.kafka.template.default-topic}"})
     public void listen(ConsumerRecord<?, ?> record) {
         //判断是否NULL
@@ -43,7 +49,7 @@ public class RequestConsumer {
             JSONObject jsonMessage = JSON.parseObject(message);
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
-            String staticResourceLockExpireTime = redisClient.get("static_resource_lock_expire_time");
+            String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
                 staticResourceLockExpireTime = "10000";
             }
@@ -57,6 +63,7 @@ public class RequestConsumer {
             boolean getLock = redisClient.tryGetDistributedLock(lockKey, uuid,  new Integer(staticResourceLockExpireTime));
             //没有获取锁就直接返回
             if (!getLock) {
+                logger.info("分布式锁: {} ,获取失败",lockKey);
                 return;
             }
             JSONObject jsonObject = requestPhpService.requestPhpServer(cookie.toString(), restUrlRedisKey);

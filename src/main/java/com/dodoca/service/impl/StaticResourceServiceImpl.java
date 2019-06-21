@@ -119,7 +119,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //获取分布式锁的持有时间
             String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
-                stringRedisTemplate.opsForValue().set("static_resource_lock_expire_time", "180000");
+                stringRedisTemplate.opsForValue().set("static_resource_lock_expire_time", "10000");
                 staticResourceLockExpireTime = "10000";
             }
             jsonLog.put("static_resource_lock_expire_time", staticResourceLockExpireTime);
