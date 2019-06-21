@@ -143,6 +143,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             }
             jsonLog.put("type", "php");
             long endTime = System.currentTimeMillis();
+            response.setHeader("resource_from","php");
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
@@ -223,6 +224,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             jsonLog.put("type", "php");
             long endTime = System.currentTimeMillis();
+            response.setHeader("resource_from","php");
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {

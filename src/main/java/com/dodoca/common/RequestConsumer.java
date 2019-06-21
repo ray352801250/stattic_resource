@@ -39,6 +39,7 @@ public class RequestConsumer {
         if (kafkaMessage.isPresent()) {
             //获取消息
             String message = kafkaMessage.get().toString();
+            logger.info("message: {}", message);
             JSONObject jsonMessage = JSON.parseObject(message);
             String uuid = UUID.randomUUID().toString();
             //获取分布式锁的持有时间
