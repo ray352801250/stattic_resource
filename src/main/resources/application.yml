@@ -4,7 +4,7 @@ spring:
   application:
     name: static_resource_server
 server:
-  port: 7774
+  port: 80
 logging:
   config: classpath:logback-spring.xml
   path: /data/logs
@@ -20,6 +20,17 @@ dodoca_rest_stock_read_timeout: 20000
 dodoca_rest_stock_connection_timeout: 20000
 #需要走缓存的店铺类型 shop表 platform_type, 多个类型之间用","相隔
 static_cache_platform_type: 10
+
+# 异步线程配置
+executor:
+# 配置核心线程数
+  core_pool_size: 10
+# 配置最大线程数
+  max_pool_size: 20
+# 配置队列大小
+  queue_capacity: 1000
+# 配置线程池中的线程的名称前缀
+  name_prefix: async-
 
 
 ---

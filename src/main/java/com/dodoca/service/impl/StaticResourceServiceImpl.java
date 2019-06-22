@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -112,6 +113,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 jsonMessage.put("domain", domain);
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
+                Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+                jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
                 return getHomePageFromRedis(domain,restUrlRedisKey, jsonLog, startTime, response);
             }
@@ -119,7 +122,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             //获取分布式锁的持有时间
             String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
             if (StringUtils.isEmpty(staticResourceLockExpireTime)) {
-                stringRedisTemplate.opsForValue().set("static_resource_lock_expire_time", "180000");
+                stringRedisTemplate.opsForValue().set("static_resource_lock_expire_time", "10000");
                 staticResourceLockExpireTime = "10000";
             }
             jsonLog.put("static_resource_lock_expire_time", staticResourceLockExpireTime);
@@ -143,6 +146,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             }
             jsonLog.put("type", "php");
             long endTime = System.currentTimeMillis();
+            response.setHeader("resource_from","php");
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
@@ -197,6 +201,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
                 jsonMessage.put("cookie", cookie);
+                Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
+                jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
                 return getGoodsDetailFromRedis(restUrlRedisKey, goodsId, jsonLog, startTime, response);
             }
@@ -223,6 +229,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             redisClient.set(restUrlRedisKey, jsonObject.toJSONString());
             jsonLog.put("type", "php");
             long endTime = System.currentTimeMillis();
+            response.setHeader("resource_from","php");
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
