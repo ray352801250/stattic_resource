@@ -24,11 +24,11 @@ static_cache_platform_type: 10
 # 异步线程配置
 executor:
 # 配置核心线程数
-  core_pool_size: 60
+  core_pool_size: 10
 # 配置最大线程数
-  max_pool_size: 100
+  max_pool_size: 20
 # 配置队列大小
-  queue_capacity: 10000
+  queue_capacity: 1000
 # 配置线程池中的线程的名称前缀
   name_prefix: async-
 
