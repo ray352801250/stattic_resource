@@ -10,7 +10,10 @@ import com.dodoca.utils.HandleRequestUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import redis.clients.jedis.JedisPool;
 
@@ -33,6 +36,13 @@ public class StaticResourceServerApplicationTests {
 
     @Autowired
     AloneActivityRecodeMapper aloneActivityRecodeMapper;
+
+    @Autowired
+    RedisConnectionFactory redisConnectionFactory;
+
+    @Autowired
+    @Qualifier("redisConfigTemplate")
+    StringRedisTemplate stringRedisTemplate;
 
 
     /**
@@ -125,5 +135,37 @@ public class StaticResourceServerApplicationTests {
         String actType = aloneActivityRecodeMapper.getActType(1210514621, DateUtils_java8.formatLoalDateTime(LocalDateTime.now()));
         System.out.println(actType);
     }
+
+    /**
+     * 测试redis连接释放
+     */
+    @Test
+    public void testRedisConnectionFactory2() throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            Thread t2 = new Thread(() -> {
+                String staticResourceLockExpireTime = stringRedisTemplate.opsForValue().get("static_resource_lock_expire_time");
+                System.out.println("staticResourceLockExpireTime: " + staticResourceLockExpireTime);
+            });
+            t2.start();
+        }
+    }
+
+    /**
+     * 测试redis连接释放
+     */
+    @Test
+    public void testRedisConnectionFactory1() {
+        for (int i = 0; i < 200; i++) {
+            Thread thread = new Thread(() -> {
+                String hget = redisClient.hget("shop13299363.weiba896.com", "http://shop13299363.weiba896.com/shop/getAppConfig.json");
+                System.out.println("hget: " + hget);
+            });
+            thread.start();
+        }
+    }
+
+
+
+
 
 }
