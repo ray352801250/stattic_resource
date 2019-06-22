@@ -37,7 +37,6 @@ public class AsyncConsumerService {
 
     @Async("asyncServiceExecutor")
     public void asyncConsumer(String message) {
-        logger.info("message: {}", message);
         JSONObject jsonMessage = JSON.parseObject(message);
         String uuid = UUID.randomUUID().toString();
         //获取分布式锁的持有时间
@@ -57,6 +56,7 @@ public class AsyncConsumerService {
         if (!getLock) {
             return;
         }
+        logger.info("message: {}", message);
         JSONObject jsonObject = requestPhpService.requestPhpServer(cookie.toString(), restUrlRedisKey);
         if (domain != null && !"".equals(domain.toString())) {
             redisClient.hset(domain.toString(), restUrlRedisKey, jsonObject.toJSONString());
