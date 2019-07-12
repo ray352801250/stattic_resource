@@ -131,7 +131,7 @@ dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&cal
 request_http_type: http
 memcache:
 # 设置连接池可用cache服务器列表，服务器构成形式：ip地址+端口号:{39.105.147.99:11211,39.105.147.99:11222}
-  servers: db.k8s_db.weiba01.com:31211
+  servers: 127.0.0.1:11211
 #  设置容错开关设置为TRUE，当当前socket不可用时，程序会自动查找可用连接并返回，否则返回NULL，默认状态是true，建议保持默认
   failover: true
 #  设置初始连接数
