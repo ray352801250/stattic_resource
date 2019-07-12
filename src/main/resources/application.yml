@@ -1,10 +1,10 @@
 spring:
   profiles:
-    active: pro
+    active: qa
   application:
     name: static_resource_server
 server:
-  port: 80
+  port: 8080
 logging:
   config: classpath:logback-spring.xml
   path: /data/logs
@@ -26,7 +26,7 @@ executor:
 # 配置核心线程数
   core_pool_size: 10
 # 配置最大线程数
-  max_pool_size: 20
+  max_pool_size: 30
 # 配置队列大小
   queue_capacity: 1000
 # 配置线程池中的线程的名称前缀
@@ -129,7 +129,16 @@ spring:
 #库存服务地址
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
-
+memcache:
+  servers: 127.0.0.1:11211
+  failover: true
+  initConn: 100
+  minConn: 20
+  maxConn: 500
+  maintSleep: 50
+  nagel: false
+  socketTO: 3000
+  aliveCheck: true
 
 
 ---
@@ -228,6 +237,17 @@ spring:
 #库存服务地址
 dodoca_php_stock_interface: http://172.16.255.27:9701/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
+
+memcache:
+  servers: db.k8s_db.weiba01.com:31211
+  failover: true
+  initConn: 100
+  minConn: 20
+  maxConn: 500
+  maintSleep: 50
+  nagel: false
+  socketTO: 3000
+  aliveCheck: true
 
 
 
@@ -328,7 +348,16 @@ spring:
 dodoca_php_stock_interface: http://172.16.255.26:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https
 
-
+memcache:
+  servers: 127.0.0.1:11211
+  failover: true
+  initConn: 100
+  minConn: 20
+  maxConn: 500
+  maintSleep: 50
+  nagel: false
+  socketTO: 3000
+  aliveCheck: true
 
 
 ---
@@ -427,3 +456,14 @@ spring:
 #库存服务地址
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https
+
+memcache:
+  servers: 127.0.0.1:11211
+  failover: true
+  initConn: 100
+  minConn: 20
+  maxConn: 500
+  maintSleep: 50
+  nagel: false
+  socketTO: 3000
+  aliveCheck: true

@@ -19,11 +19,14 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -74,6 +77,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Qualifier("redisConfigTemplate")
     StringRedisTemplate stringRedisTemplate;
 
+    @Autowired
+    CookieDecodeService cookieDecodeService;
+
 
     @Override
     public JSONObject homePageResource(HttpServletRequest request, HttpServletResponse response) {
@@ -82,6 +88,13 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String domain = request.getHeader("host");
         String requestUri = request.getHeader("request_uri");
         String cookie = request.getHeader("cookie");
+        Cookie[] cookies = request.getCookies();
+        String wxrrdWapSession = null;
+        for (Cookie c : cookies) {
+            if (c.getName().startsWith("wxrrd_wap_session")) {
+                wxrrdWapSession = c.getValue();
+            }
+        }
         if (cookie == null) {
             cookie = "";
         }
@@ -93,6 +106,15 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
+            //根据访客的session信息判断访客是不是推客
+            if (wxrrdWapSession != null) {
+                logger.info("wxrrdWapSession: " + wxrrdWapSession);
+                Map<Object, Object> cacheInfo = cookieDecodeService.getCacheInfo(wxrrdWapSession);
+                logger.info("cacheInfo: " + cacheInfo);
+                if (cacheInfo.get("guider") != null) {
+                    restUrlRedisKey = restUrlRedisKey + "&isGuider=1";
+                }
+            }
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (stringRedisTemplate.opsForHash().hasKey("static_resource_version_one_hosts", domain)) {
                 response.setHeader("resource_from","static_resource_version_one");
