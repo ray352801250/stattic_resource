@@ -5,11 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.dodoca.utils.AESUtil;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import com.whalin.MemCached.MemCachedClient;
-import de.ailis.pherialize.Mixed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -24,6 +24,9 @@ import static de.ailis.pherialize.Pherialize.unserialize;
 public class CookieDecodeService {
     private static final Logger looger = LoggerFactory.getLogger(CookieDecodeService.class);
 
+    @Value("${encryption_key}")
+    String encryptionKey = "QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb";
+
     @Autowired
     private MemCachedClient memCachedClient;
 
@@ -33,17 +36,25 @@ public class CookieDecodeService {
             return result;
         }
         //session信息base64解密
-        JSONObject jsonObject = JSON.parseObject(new String(Base64.decode(wxrrdWapSession)));
+        byte[] decode = Base64.decode(wxrrdWapSession);
+        if (decode == null) {
+            looger.info("base64解码为空");
+            return result;
+        }
+        String wxrrdWapSessionBase64 = new String(decode);
+        JSONObject jsonObject = JSON.parseObject(wxrrdWapSessionBase64);
         String value = jsonObject.getString("value");
         String iv = jsonObject.getString("iv");
         //获取解密后的memcache的key
-        String cacheId = unserialize(AESUtil.decrypt(value, iv)).toString();
+        String cacheId = unserialize(AESUtil.decrypt(value, iv, encryptionKey)).toString();
+        looger.info("cacheId: " + cacheId);
         //取 memcache 的数据
-        String cacheInfo = memCachedClient.get("laravel:" + cacheId).toString();
+        Object cacheInfo = memCachedClient.get("laravel:" + cacheId);
         if (cacheInfo == null) {
+            looger.info("从memcache取 laravel:" + cacheId + " 为空");
             return result;
         }
-        return (Map<Object, Object>) unserialize(cacheInfo).getValue();
+        return (Map<Object, Object>) unserialize(cacheInfo.toString()).getValue();
     }
 
 

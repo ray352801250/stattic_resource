@@ -4,7 +4,7 @@ spring:
   application:
     name: static_resource_server
 server:
-  port: 8080
+  port: 7777
 logging:
   config: classpath:logback-spring.xml
   path: /data/logs
@@ -130,15 +130,29 @@ spring:
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
 memcache:
-  servers: 127.0.0.1:11211
+# 设置连接池可用cache服务器列表，服务器构成形式：ip地址+端口号:{39.105.147.99:11211,39.105.147.99:11222}
+  servers: db.k8s_db.weiba01.com:31211
+#  设置容错开关设置为TRUE，当当前socket不可用时，程序会自动查找可用连接并返回，否则返回NULL，默认状态是true，建议保持默认
   failover: true
-  initConn: 100
-  minConn: 20
-  maxConn: 500
+#  设置初始连接数
+  initConn: 10
+#  设置最小连接数
+  minConn: 5
+#  设置最大连接数
+  maxConn: 100
+#  设置连接池维护线程的睡眠时间，设置为0，维护线程不启动
   maintSleep: 50
+#  设置Nagle算法，设置为false，因为通讯数据量比较大要求响应及时
   nagel: false
+#  设置socket读取等待超时时间
   socketTO: 3000
+#  开启心跳检查
+#  设为true则每次通信都要进行连接是否有效的监测，造成通信次数倍增，加大网络负载，
+#  因此该参数应该在对HA要求比较高的场合设为TRUE，默认状态是false
   aliveCheck: true
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
+
 
 
 ---
@@ -239,15 +253,28 @@ dodoca_php_stock_interface: http://172.16.255.27:9701/router/rest?site=tester&ca
 request_http_type: http
 
 memcache:
+# 设置连接池可用cache服务器列表，服务器构成形式：ip地址+端口号:{39.105.147.99:11211,39.105.147.99:11222}
   servers: db.k8s_db.weiba01.com:31211
+#  设置容错开关设置为TRUE，当当前socket不可用时，程序会自动查找可用连接并返回，否则返回NULL，默认状态是true，建议保持默认
   failover: true
-  initConn: 100
-  minConn: 20
-  maxConn: 500
+#  设置初始连接数
+  initConn: 10
+#  设置最小连接数
+  minConn: 5
+#  设置最大连接数
+  maxConn: 100
+#  设置连接池维护线程的睡眠时间，设置为0，维护线程不启动
   maintSleep: 50
+#  设置Nagle算法，设置为false，因为通讯数据量比较大要求响应及时
   nagel: false
+#  设置socket读取等待超时时间
   socketTO: 3000
+#  开启心跳检查
+#  设为true则每次通信都要进行连接是否有效的监测，造成通信次数倍增，加大网络负载，
+#  因此该参数应该在对HA要求比较高的场合设为TRUE，默认状态是false
   aliveCheck: true
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
 
 
 
@@ -359,6 +386,9 @@ memcache:
   socketTO: 3000
   aliveCheck: true
 
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
+
 
 ---
 spring:
@@ -458,12 +488,25 @@ dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&cal
 request_http_type: https
 
 memcache:
-  servers: 127.0.0.1:11211
+# 设置连接池可用cache服务器列表，服务器构成形式：ip地址+端口号:{39.105.147.99:11211,39.105.147.99:11222}
+  servers: db.k8s_db.weiba01.com:31211
+#  设置容错开关设置为TRUE，当当前socket不可用时，程序会自动查找可用连接并返回，否则返回NULL，默认状态是true，建议保持默认
   failover: true
-  initConn: 100
-  minConn: 20
-  maxConn: 500
+#  设置初始连接数
+  initConn: 10
+#  设置最小连接数
+  minConn: 5
+#  设置最大连接数
+  maxConn: 100
+#  设置连接池维护线程的睡眠时间，设置为0，维护线程不启动
   maintSleep: 50
+#  设置Nagle算法，设置为false，因为通讯数据量比较大要求响应及时
   nagel: false
+#  设置socket读取等待超时时间
   socketTO: 3000
+#  开启心跳检查
+#  设为true则每次通信都要进行连接是否有效的监测，造成通信次数倍增，加大网络负载，
+#  因此该参数应该在对HA要求比较高的场合设为TRUE，默认状态是false
   aliveCheck: true
+#  AES秘钥
+encryption_key: QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb

@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -93,6 +94,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         for (Cookie c : cookies) {
             if (c.getName().startsWith("wxrrd_wap_session")) {
                 wxrrdWapSession = c.getValue();
+                logger.info("wxrrdWapSession: " + wxrrdWapSession);
             }
         }
         if (cookie == null) {
@@ -108,7 +110,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         try {
             //根据访客的session信息判断访客是不是推客
             if (wxrrdWapSession != null) {
-                logger.info("wxrrdWapSession: " + wxrrdWapSession);
+                wxrrdWapSession = URLDecoder.decode(wxrrdWapSession, "GBK");
                 Map<Object, Object> cacheInfo = cookieDecodeService.getCacheInfo(wxrrdWapSession);
                 logger.info("cacheInfo: " + cacheInfo);
                 if (cacheInfo.get("guider") != null) {
@@ -134,7 +136,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("domain", domain);
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-                jsonMessage.put("cookie", cookie);
+//                jsonMessage.put("cookie", cookie);
                 Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
                 jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
@@ -222,7 +224,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             if (redisClient.exists(restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-                jsonMessage.put("cookie", cookie);
+//                jsonMessage.put("cookie", cookie);
                 Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
                 jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
