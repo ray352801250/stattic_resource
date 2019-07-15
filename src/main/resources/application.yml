@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: qa
+    active: dev
   application:
     name: static_resource_server
 server:

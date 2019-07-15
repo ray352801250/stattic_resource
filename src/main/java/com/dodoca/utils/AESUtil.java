@@ -1,9 +1,9 @@
 package com.dodoca.utils;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 /**
  * @description: 解析cookie
@@ -22,10 +22,11 @@ public class AESUtil {
     public static String decrypt(String src, String iv, String encryptionKey) throws Exception {
         //"算法/模式/补码方式"
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        Base64.Decoder decoder = Base64.getDecoder();
         SecretKeySpec secretKeySpec = new SecretKeySpec(encryptionKey.getBytes("UTF-8"), "AES");
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(Base64.decode(iv));
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(decoder.decode(iv));
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-        return new String(cipher.doFinal(Base64.decode(src)));
+        return new String(cipher.doFinal(decoder.decode(src)));
     }
 
 

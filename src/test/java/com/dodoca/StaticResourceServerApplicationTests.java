@@ -11,6 +11,7 @@ import com.dodoca.utils.DateUtils_java8;
 import com.dodoca.utils.HandleRequestUtil;
 import de.ailis.pherialize.Pherialize;
 import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.internal.OperationFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,9 +194,10 @@ public class StaticResourceServerApplicationTests {
      */
     @Test
     public void testMemcached() {
-//        boolean test = memCachedClient.set("laravel:d84536a94e98fe30a1afd17b7182df184bc2716e", "a:5:{s:6:\"_token\";s:40:\"sRIZ4mqGRrzdzJf7ePo6mrL6oZzIaAG0yM0PDxrC\";s:9:\"_previous\";a:1:{s:3:\"url\";s:25:\"http://shop1.weiba456.com\";}s:5:\"flash\";a:2:{s:3:\"old\";a:0:{}s:3:\"new\";a:0:{}}s:6:\"member\";a:11:{s:2:\"id\";i:45;s:14:\"member_account\";i:10000002061;s:13:\"mobile_prefix\";s:3:\"+86\";s:6:\"mobile\";s:11:\"13949025109\";s:4:\"name\";s:6:\"光辉\";s:6:\"avatar\";s:127:\"http://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTIebbzqRM9BNok2meHCFOqGJXV9WjmSYMGa0GXRjL6oAtpBBAwC0F4LS7r6rRYq7yzdLaYVvcMbdg/132\";s:16:\"is_verify_mobile\";i:1;s:6:\"gender\";i:1;s:7:\"country\";s:6:\"中国\";s:8:\"province\";s:6:\"上海\";s:4:\"city\";s:6:\"闵行\";}s:9:\"_sf2_meta\";a:3:{s:1:\"u\";i:1562928526;s:1:\"c\";i:1562910179;s:1:\"l\";s:1:\"0\";}}");
-//        System.out.println("test： " + test);
         MemcachedClient memCachedClient = memcachedRunner.getClient();
+        OperationFuture<Boolean> set = memCachedClient.set("laravel:d84536a94e98fe30a1afd17b7182df184bc2716e", 10000, "a:5:{s:6:\"_token\";s:40:\"sRIZ4mqGRrzdzJf7ePo6mrL6oZzIaAG0yM0PDxrC\";s:9:\"_previous\";a:1:{s:3:\"url\";s:25:\"http://shop1.weiba456.com\";}s:5:\"flash\";a:2:{s:3:\"old\";a:0:{}s:3:\"new\";a:0:{}}s:6:\"member\";a:11:{s:2:\"id\";i:45;s:14:\"member_account\";i:10000002061;s:13:\"mobile_prefix\";s:3:\"+86\";s:6:\"mobile\";s:11:\"13949025109\";s:4:\"name\";s:6:\"光辉\";s:6:\"avatar\";s:127:\"http://thirdwx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTIebbzqRM9BNok2meHCFOqGJXV9WjmSYMGa0GXRjL6oAtpBBAwC0F4LS7r6rRYq7yzdLaYVvcMbdg/132\";s:16:\"is_verify_mobile\";i:1;s:6:\"gender\";i:1;s:7:\"country\";s:6:\"中国\";s:8:\"province\";s:6:\"上海\";s:4:\"city\";s:6:\"闵行\";}s:9:\"_sf2_meta\";a:3:{s:1:\"u\";i:1562928526;s:1:\"c\";i:1562910179;s:1:\"l\";s:1:\"0\";}}");
+        System.out.println("test： " + set.getStatus());
+
         Object o = memCachedClient.get("laravel:d84536a94e98fe30a1afd17b7182df184bc2716e");
         System.out.println("====================...............");
         if (o != null) {

@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.MemcachedRunner;
 import com.dodoca.utils.AESUtil;
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+
 
 import net.spy.memcached.MemcachedClient;
 import org.slf4j.Logger;
@@ -13,7 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import javax.annotation.Resource;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
 import static de.ailis.pherialize.Pherialize.unserialize;
 
 /**
@@ -26,10 +30,9 @@ public class CookieDecodeService {
     private static final Logger looger = LoggerFactory.getLogger(CookieDecodeService.class);
 
     @Value("${encryption_key}")
-    String encryptionKey = "QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb";
+    private String encryptionKey;
 
-
-    @Autowired
+    @Resource
     private MemcachedRunner memcachedRunner;
 
     public Map<Object,Object> getCacheInfo(String wxrrdWapSession) throws Exception {
@@ -38,7 +41,8 @@ public class CookieDecodeService {
             return result;
         }
         //session信息base64解密
-        byte[] decode = Base64.decode(wxrrdWapSession);
+        Base64.Decoder decoder = Base64.getDecoder();
+        byte[] decode = decoder.decode(wxrrdWapSession);
         if (decode == null) {
             looger.info("base64解码为空");
             return result;
