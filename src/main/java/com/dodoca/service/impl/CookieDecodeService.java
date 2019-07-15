@@ -2,10 +2,11 @@ package com.dodoca.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.dodoca.config.MemcachedRunner;
 import com.dodoca.utils.AESUtil;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-import com.whalin.MemCached.MemCachedClient;
 
+import net.spy.memcached.MemcachedClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,9 @@ public class CookieDecodeService {
     @Value("${encryption_key}")
     String encryptionKey = "QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb";
 
+
     @Autowired
-    private MemCachedClient memCachedClient;
+    private MemcachedRunner memcachedRunner;
 
     public Map<Object,Object> getCacheInfo(String wxrrdWapSession) throws Exception {
         Map<Object,Object> result = new HashMap<>();
@@ -50,6 +52,7 @@ public class CookieDecodeService {
         String cacheKey = "laravel:" + cacheId;
         looger.info("cacheKey: " + cacheKey);
         //取 memcache 的数据
+        MemcachedClient memCachedClient = memcachedRunner.getClient();
         Object cacheInfo = memCachedClient.get(cacheKey);
         if (cacheInfo == null) {
             looger.info("从memcache取: " + cacheKey + " 为空");
