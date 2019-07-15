@@ -20,9 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.ParseException;
 import java.time.LocalDateTime;
@@ -78,8 +80,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Qualifier("redisConfigTemplate")
     StringRedisTemplate stringRedisTemplate;
 
-    @Autowired
-    CookieDecodeService cookieDecodeService;
+    @Resource
+    private CookieDecodeService cookieDecodeService;
 
 
     @Override
@@ -89,14 +91,6 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String domain = request.getHeader("host");
         String requestUri = request.getHeader("request_uri");
         String cookie = request.getHeader("cookie");
-        Cookie[] cookies = request.getCookies();
-        String wxrrdWapSession = null;
-        for (Cookie c : cookies) {
-            if (c.getName().startsWith("wxrrd_wap_session")) {
-                wxrrdWapSession = c.getValue();
-                logger.info("wxrrdWapSession: " + wxrrdWapSession);
-            }
-        }
         if (cookie == null) {
             cookie = "";
         }
@@ -108,15 +102,6 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
-            //根据访客的session信息判断访客是不是推客
-            if (wxrrdWapSession != null) {
-                wxrrdWapSession = URLDecoder.decode(wxrrdWapSession, "GBK");
-                Map<Object, Object> cacheInfo = cookieDecodeService.getCacheInfo(wxrrdWapSession);
-                logger.info("cacheInfo: " + cacheInfo);
-                if (cacheInfo.get("guider") != null) {
-                    restUrlRedisKey = restUrlRedisKey + "&isGuider=1";
-                }
-            }
             //需要走一期逻辑的商户域名 static_resource_version_one_hosts
             if (stringRedisTemplate.opsForHash().hasKey("static_resource_version_one_hosts", domain)) {
                 response.setHeader("resource_from","static_resource_version_one");
@@ -197,8 +182,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_goods_detail=bigdata")) {
             return new JSONObject();
         }
-        String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
-        String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
+//        requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
+        String goodsIdUrl = requestUri.split("\\?")[0];
+        String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
             String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
@@ -257,6 +243,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
+            logger.error(e.getMessage(), e);
             jsonLog.put("error_message", e.getMessage());
             return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime, response);
         }finally {
@@ -549,6 +536,22 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         response.setHeader("resource_from","php");
         return jsonObject;
     }
+
+
+//    /**
+//     * 请求路径添加复购标识
+//     * @param restUrlRedisKey
+//     * @return
+//     */
+//    private String addRepeatPurchaseSignToRequestUrl(String restUrlRedisKey){
+//        if (!restUrlRedisKey.contains("?")) {
+//            return restUrlRedisKey + "?isGuider=1";
+//        }
+//        if (restUrlRedisKey.endsWith("&")) {
+//            return restUrlRedisKey + "isGuider=1";
+//        }
+//        return restUrlRedisKey + "&isGuider=1";
+//    }
 
 
 

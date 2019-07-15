@@ -31,6 +31,7 @@ public class MyControllerAdvice {
     public JSONObject errorHandler(Exception ex, HttpServletRequest request, HttpServletResponse response) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("ErrorMessage", "未知异常");
+        logger.error(ex.getMessage(), ex);
         return jsonObject;
     }
 

@@ -15,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -56,8 +58,11 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
     @Value("${dodoca_redis_key_expire_time}")
     int redisSession;
 
-    @Autowired
-    RequestPhpService requestPhpService;
+    @Resource
+    private RequestPhpService requestPhpService;
+
+    @Resource
+    private CookieDecodeService cookieDecodeService;
 
 
 
@@ -187,8 +192,9 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
         try {
 
             String domain = request.getHeader("host");
+            String requestUri = request.getHeader("request_uri");
 
-            json_log.put("nginx_request_url", request.getHeader("request_uri"));
+            json_log.put("nginx_request_url", requestUri);
 
             json_log.put("nginx_request_host", domain);
 
@@ -198,9 +204,10 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
              *     2.  url时间戳参数 -- t=unix时间戳
              *
              */
-            String true_request_uri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
+            requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
+            String true_request_uri = HandleRequestUtil.handleRequestUrl(requestUri);
 
-            String goods_id_url = request.getHeader("request_uri").split("\\?")[0];
+            String goods_id_url = requestUri.split("\\?")[0];
             String goods_id = goods_id_url.substring(goods_id_url.lastIndexOf("/")+1,goods_id_url.indexOf(".json"));
             String rest_url_redis_key = http_type+"://"+domain+true_request_uri;
 

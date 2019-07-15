@@ -9,11 +9,14 @@ import com.dodoca.utils.AESUtil;
 import net.spy.memcached.MemcachedClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +38,7 @@ public class CookieDecodeService {
     @Resource
     private MemcachedRunner memcachedRunner;
 
-    public Map<Object,Object> getCacheInfo(String wxrrdWapSession) throws Exception {
+    public Map<Object,Object> getCacheInfo(String wxrrdWapSession) {
         Map<Object,Object> result = new HashMap<>();
         if (wxrrdWapSession == null || wxrrdWapSession.isEmpty()) {
             return result;
@@ -52,7 +55,13 @@ public class CookieDecodeService {
         String value = jsonObject.getString("value");
         String iv = jsonObject.getString("iv");
         //获取解密后的memcache的key
-        String cacheId = unserialize(AESUtil.decrypt(value, iv, encryptionKey)).toString();
+        String cacheId = null;
+        try {
+            cacheId = unserialize(AESUtil.decrypt(value, iv, encryptionKey)).toString();
+        } catch (Exception e) {
+            looger.error(e.getMessage(), e);
+            return result;
+        }
         String cacheKey = "laravel:" + cacheId;
         looger.info("cacheKey: " + cacheKey);
         //取 memcache 的数据
@@ -63,6 +72,37 @@ public class CookieDecodeService {
             return result;
         }
         return (Map<Object, Object>) unserialize(cacheInfo.toString()).getValue();
+    }
+
+
+
+
+    public  String addRepeatPurchaseSignToRequestUri(HttpServletRequest request) {
+        String requestUri = request.getHeader("request_uri");
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            String wxrrdWapSession = null;
+            for (Cookie c : cookies) {
+                if (c.getName().startsWith("wxrrd_wap_session")) {
+                    wxrrdWapSession = c.getValue();
+                }
+            }
+            //根据访客的session信息判断访客是不是推客
+            if (wxrrdWapSession != null) {
+                try {
+                    wxrrdWapSession = URLDecoder.decode(wxrrdWapSession, "GBK");
+                } catch (UnsupportedEncodingException e) {
+                    looger.error(e.getMessage(), e);
+                    return requestUri;
+                }
+                Map<Object, Object> cacheInfo = getCacheInfo(wxrrdWapSession);
+                if (cacheInfo.get("guider") != null) {
+                    requestUri = requestUri + "&is_repeatPurchase=1";
+                }
+            }
+
+        }
+        return requestUri;
     }
 
 
