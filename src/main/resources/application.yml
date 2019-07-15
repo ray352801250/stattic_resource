@@ -1,13 +1,13 @@
 spring:
   profiles:
-    active: qa
+    active: dev
   application:
     name: static_resource_server
 server:
   port: 7777
 logging:
   config: classpath:logback-spring.xml
-  path: /data/logs
+  path: ./logs
 #key过期时间(一期用) s
 dodoca_redis_key_expire_time: 300
 #日志级别(一期用)
@@ -31,7 +31,6 @@ executor:
   queue_capacity: 1000
 # 配置线程池中的线程的名称前缀
   name_prefix: async-
-
 
 ---
 spring:

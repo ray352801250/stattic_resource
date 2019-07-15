@@ -47,11 +47,12 @@ public class CookieDecodeService {
         String iv = jsonObject.getString("iv");
         //获取解密后的memcache的key
         String cacheId = unserialize(AESUtil.decrypt(value, iv, encryptionKey)).toString();
-        looger.info("cacheId: " + cacheId);
+        String cacheKey = "laravel:" + cacheId;
+        looger.info("cacheKey: " + cacheKey);
         //取 memcache 的数据
-        Object cacheInfo = memCachedClient.get("laravel:" + cacheId);
+        Object cacheInfo = memCachedClient.get(cacheKey);
         if (cacheInfo == null) {
-            looger.info("从memcache取 laravel:" + cacheId + " 为空");
+            looger.info("从memcache取: " + cacheKey + " 为空");
             return result;
         }
         return (Map<Object, Object>) unserialize(cacheInfo.toString()).getValue();
