@@ -37,7 +37,7 @@ public class RequestConsumer {
     @Autowired
     AsyncConsumerService asyncConsumerService;
 
-//    @KafkaListener(topics = {"${spring.kafka.template.default-topic}"})
+    @KafkaListener(topics = {"${spring.kafka.template.default-topic}"})
     public void listen(ConsumerRecord<?, ?> record) {
         //判断是否NULL
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());

@@ -204,6 +204,7 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
              *     2.  url时间戳参数 -- t=unix时间戳
              *
              */
+            //针对推客添加标识
             requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
             String true_request_uri = HandleRequestUtil.handleRequestUrl(requestUri);
 

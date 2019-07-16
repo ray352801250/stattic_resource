@@ -182,7 +182,8 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_goods_detail=bigdata")) {
             return new JSONObject();
         }
-//        requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
+        //针对推客添加标识
+        requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
         String goodsIdUrl = requestUri.split("\\?")[0];
         String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;

@@ -27,7 +27,7 @@ public class MemcachedRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            client = new MemcachedClient(new InetSocketAddress(memcacheSource.getIp(),memcacheSource.getPort()));
+            client = new MemcachedClient(new InetSocketAddress(memcacheSource.getIp(), memcacheSource.getPort()), new InetSocketAddress(memcacheSource.getIp2(), memcacheSource.getPort2()));
         } catch (IOException e) {
             logger.error("inint MemcachedClient failed ",e);
         }

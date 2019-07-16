@@ -16,6 +16,26 @@ public class MemcacheSource {
 
     private int port;
 
+    private String ip2;
+
+    private int port2;
+
+    public String getIp2() {
+        return ip2;
+    }
+
+    public void setIp2(String ip2) {
+        this.ip2 = ip2;
+    }
+
+    public int getPort2() {
+        return port2;
+    }
+
+    public void setPort2(int port2) {
+        this.port2 = port2;
+    }
+
     public String getIp() {
         return ip;
     }
