@@ -4,7 +4,7 @@ spring:
   application:
     name: static_resource_server
 server:
-  port: 80
+  port: 8080
 logging:
   config: classpath:logback-spring.xml
   path: /data/logs
@@ -26,7 +26,7 @@ executor:
 # 配置核心线程数
   core_pool_size: 10
 # 配置最大线程数
-  max_pool_size: 20
+  max_pool_size: 30
 # 配置队列大小
   queue_capacity: 1000
 # 配置线程池中的线程的名称前缀
@@ -129,6 +129,13 @@ spring:
 #库存服务地址
 dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
+memcache:
+  ip: 127.0.0.1
+  port: 11211
+  ip2: 127.0.0.1
+  port2: 31211
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
 
 
 
@@ -229,6 +236,14 @@ spring:
 dodoca_php_stock_interface: http://172.16.255.27:9701/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: http
 
+memcache:
+  ip: db.k8s_db.weiba01.com
+  port: 31211
+  ip2: db.k8s_db.weiba01.com
+  port2: 31211
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
+
 
 
 ---
@@ -328,24 +343,33 @@ spring:
 dodoca_php_stock_interface: http://172.16.255.26:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https
 
+memcache:
+  ip: db.k8s_db.weiba01.com
+  port: 31211
+  ip2: db.k8s_db.weiba01.com
+  port2: 31211
 
+#  AES秘钥
+encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
 
 
 ---
 spring:
   profiles: pro
   datasource:
-    url: jdbc:mysql://101.201.236.30:3881/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+#    url: jdbc:mysql://101.201.236.30:3881/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    url: jdbc:mysql://10.10.3.44:3881/wxrrd?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
     username: maxwell
-    password: M510A987uojyjjj0210maxwell
+    password: nZFt8JyRqINU
+#    password: M510A987uojyjjj0210maxwell
     driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
 #      初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时 默认0
-    initial-size: 5
+    initial-size: 10
     #      最小连接池数量
-    min-idle: 5
+    min-idle: 10
     #      最大连接池数量 默认8
-    max-active: 10
+    max-active: 100
     ##      获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
     max-wait: 60000
     #     配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
@@ -369,9 +393,9 @@ spring:
     #      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
   redis:
     database: 0
-    host: 10.10.3.14
-    port: 31386
-    password: lajiredis123
+    host: 10.10.3.63
+    port: 6379
+    password: Wu312MatYCH5Sn4S
 #    数据库连接超时时间，2.0 中该参数的类型为Duration，这里在配置的时候需要指明单位
     timeout: 500
     jedis:
@@ -388,9 +412,9 @@ spring:
 # 从redis读取配置信息
   redis_config:
     database: 1
-    host: 10.10.3.14
-    port: 31386
-    password: lajiredis123
+    host: 10.10.3.63
+    port: 6379
+    password: Wu312MatYCH5Sn4S
     pool:
     #  # 连接池最大连接数（使用负值表示没有限制）
       max-active: 200
@@ -410,7 +434,7 @@ spring:
       batch-size: 16384
       buffer-memory: 33554432
     consumer:
-      group-id: static_resource_server_01
+      group-id: static_resource_server_02
       enable-auto-commit: true
       auto-commit-interval: 6000
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -425,5 +449,14 @@ spring:
     template:
       default-topic: wxrrd_static_resource_server_request
 #库存服务地址
-dodoca_php_stock_interface: http://172.17.2.211:9401/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
+dodoca_php_stock_interface: http://10.10.3.22:80/router/rest?site=tester&callerid=tester&uuid=tester_%s&method=service.stock.get&goods_ids[]=%s
 request_http_type: https
+
+memcache:
+  ip: 10.10.3.39
+  port: 11211
+  ip2: 10.10.3.23
+  port2: 11211
+
+#  AES秘钥
+encryption_key: QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb

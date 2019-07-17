@@ -19,11 +19,17 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -74,6 +80,9 @@ public class StaticResourceServiceImpl implements StaticResourceService {
     @Qualifier("redisConfigTemplate")
     StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private CookieDecodeService cookieDecodeService;
+
 
     @Override
     public JSONObject homePageResource(HttpServletRequest request, HttpServletResponse response) {
@@ -112,7 +121,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("domain", domain);
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-                jsonMessage.put("cookie", cookie);
+//                jsonMessage.put("cookie", cookie);
                 Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
                 jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
@@ -173,8 +182,10 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         if (domain == null || requestUri == null || !requestUri.contains("?") || !requestUri.contains("static_goods_detail=bigdata")) {
             return new JSONObject();
         }
-        String goodsIdUrl = request.getHeader("request_uri").split("\\?")[0];
-        String trueRequestUri = HandleRequestUtil.handleRequestUrl(request.getHeader("request_uri"));
+        //针对推客添加标识
+        requestUri = cookieDecodeService.addRepeatPurchaseSignToRequestUri(request);
+        String goodsIdUrl = requestUri.split("\\?")[0];
+        String trueRequestUri = HandleRequestUtil.handleRequestUrl(requestUri);
         String restUrlRedisKey = requestHttpType + "://" + domain + trueRequestUri;
         try {
             String goodsId = goodsIdUrl.substring(goodsIdUrl.lastIndexOf("/") + 1, goodsIdUrl.indexOf(".json"));
@@ -200,7 +211,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             if (redisClient.exists(restUrlRedisKey)) {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("restUrlRedisKey", restUrlRedisKey);
-                jsonMessage.put("cookie", cookie);
+//                jsonMessage.put("cookie", cookie);
                 Long milliSecond = LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli();
                 jsonMessage.put("ts", milliSecond);
                 kafkaSender.send(jsonMessage);
@@ -233,6 +244,7 @@ public class StaticResourceServiceImpl implements StaticResourceService {
             jsonLog.put("interface_time", (endTime - startTime));
             return jsonObject;
         }catch (Exception e) {
+            logger.error(e.getMessage(), e);
             jsonLog.put("error_message", e.getMessage());
             return getResultFromPhp(restUrlRedisKey, cookie, jsonLog, startTime, response);
         }finally {
@@ -525,6 +537,22 @@ public class StaticResourceServiceImpl implements StaticResourceService {
         response.setHeader("resource_from","php");
         return jsonObject;
     }
+
+
+//    /**
+//     * 请求路径添加复购标识
+//     * @param restUrlRedisKey
+//     * @return
+//     */
+//    private String addRepeatPurchaseSignToRequestUrl(String restUrlRedisKey){
+//        if (!restUrlRedisKey.contains("?")) {
+//            return restUrlRedisKey + "?isGuider=1";
+//        }
+//        if (restUrlRedisKey.endsWith("&")) {
+//            return restUrlRedisKey + "isGuider=1";
+//        }
+//        return restUrlRedisKey + "&isGuider=1";
+//    }
 
 
 
