@@ -63,10 +63,13 @@ public class CookieDecodeService {
             return result;
         }
         String cacheKey = "laravel:" + cacheId;
-        looger.info("cacheKey: " + cacheKey);
         //取 memcache 的数据
         MemcachedClient memCachedClient = memcachedRunner.getClient();
         Object cacheInfo = memCachedClient.get(cacheKey);
+        if (cacheInfo == null) {
+            MemcachedClient memCachedClient2 = memcachedRunner.getClient2();
+            cacheInfo = memCachedClient2.get(cacheKey);
+        }
         if (cacheInfo == null) {
             looger.info("从memcache取: " + cacheKey + " 为空");
             return result;

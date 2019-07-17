@@ -133,7 +133,7 @@ memcache:
   ip: 127.0.0.1
   port: 11211
   ip2: 127.0.0.1
-  port2: 11211
+  port2: 31211
 #  AES秘钥
 encryption_key: 2lXRf3TF0D08DFaHKZswMrhXYgDhzjwU
 
@@ -454,9 +454,9 @@ request_http_type: https
 
 memcache:
   ip: 10.10.3.39
-  port: 31211
+  port: 11211
   ip2: 10.10.3.23
-  port2: 31211
+  port2: 11211
 
 #  AES秘钥
 encryption_key: QqRb4d2TlBcE0SY8xLycs6mMPUPpImeb
