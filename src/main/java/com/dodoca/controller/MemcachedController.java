@@ -1,6 +1,9 @@
 package com.dodoca.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.dodoca.config.MemcachedRunner;
+import com.dodoca.service.impl.CookieDecodeService;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
@@ -12,8 +15,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.net.SocketAddress;
 import java.util.Collection;
+import java.util.Map;
 
 
 /**
@@ -29,13 +34,16 @@ public class MemcachedController {
     @Autowired
     private MemcachedRunner memcachedRunner;
 
+    @Resource
+    CookieDecodeService cookieDecodeService;
+
 
     @GetMapping("/getMemcacheKey")
     public Object getMemcacheKey(String key) {
         logger.info("key============ " + key);
         logger.info("hashCode============ " + key.hashCode());
         int aa = key.hashCode()%2;
-        logger.info("aa============ " + aa);
+        logger.info("client============ " + aa);
         MemcachedClient memcachedClient = memcachedRunner.getClient();
         MemcachedClient memcachedClient2 = memcachedRunner.getClient2();
         logger.info("client1: " + memcachedClient.get(key));
@@ -54,4 +62,11 @@ public class MemcachedController {
         memcachedClient.set(key,10000, value);
         return "success";
     }
+
+    @GetMapping("/getInfoBySession")
+    public String getInfoBySession(String session) {
+        Map<Object, Object> cacheInfo = cookieDecodeService.getCacheInfo(session);
+        return cacheInfo.toString();
+    }
+
 }

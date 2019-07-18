@@ -74,6 +74,7 @@ public class CookieDecodeService {
             looger.info("从memcache取: " + cacheKey + " 为空");
             return result;
         }
+        looger.info(">>>cacheKey: {}  >>>cacheInfo: {}", cacheKey, cacheInfo);
         return (Map<Object, Object>) unserialize(cacheInfo.toString()).getValue();
     }
 
