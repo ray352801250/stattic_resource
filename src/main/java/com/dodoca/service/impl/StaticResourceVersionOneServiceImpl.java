@@ -243,12 +243,20 @@ public class StaticResourceVersionOneServiceImpl implements StaticResourceVersio
                 HttpEntity<String> requestEntity = new HttpEntity<String>(null, headers);
                 JSONObject jsonRestReturn;
                 synchronized (this){
-                    jsonRestReturn = restTemplate.exchange(rest_url_redis_key, HttpMethod.GET,requestEntity, JSONObject.class).getBody();
+                    if (redisClient.get(rest_url_redis_key) != null) {
+                        jsonRestReturn = JSONObject.parseObject(redisClient.get(rest_url_redis_key));
+                    }else {
+                        jsonRestReturn = restTemplate.exchange(rest_url_redis_key, HttpMethod.GET,requestEntity, JSONObject.class).getBody();
+                    }
                 }
 
                 int stock = requestPhpService.stockService(goods_id,json_log);
                 jsonRestReturn.put("stock", stock);
-                if (jsonRestReturn.get("repurchase_price") != null) {
+                if (rest_url_redis_key.contains("is_repeatPurchase")) {
+                    if (jsonRestReturn.get("repurchase_price") != null) {
+                        redisClient.setex(rest_url_redis_key, redisSession, jsonRestReturn.toJSONString());
+                    }
+                }else {
                     redisClient.setex(rest_url_redis_key, redisSession, jsonRestReturn.toJSONString());
                 }
 
